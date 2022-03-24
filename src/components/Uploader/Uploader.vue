@@ -13,7 +13,7 @@
       class="upload-region-component__info"
       v-if="!imgSource"
     >
-      <icon-component icon-type="upload" width="50" height="50" class="upload-icon" />
+      <icon-component icon-type="upload" width="55" height="50" class="upload-icon" />
 
       <div class="upload-region-component__text">
         <span>Drop or Click</span> <br>
@@ -36,51 +36,43 @@
   </label>
 </template>
 
-<script>
-import { mapActions } from "vuex";
-export default {
-  name: "upload-region-component",
-  props: {
-    withEffects: Boolean,
-    imageSrc: String,
-  },
-  data() {
-    return {
-      dragOver: false,
-      id: `id-${Date.now()}`,
-      imgSource: null,
-    };
-  },
-  methods: {
-    ...mapActions([
-      "setEffectModal",
-      "getIPFSimage",
-    ]),
-    onFileSelected(event) {
-      this.dragOver = false;
-      const img = event.target.files ? event.target.files[0] : null;
-      this.$refs.inputFile.value = null;
-      this.updateImage(img);
+<script setup>
+import { ref, defineProps, defineEmits } from "vue";
+import { useStore } from "vuex";
 
-      if (this.withEffects) {
-        this.setEffectModal(true);
-      }
-    },
-    buttonClick() {
-      document.getElementById(this.id).click();
-    },
-    updateImage(img) {
-      const reader = new FileReader();
+const store = useStore();
+let dragOver = ref(false);
+const id = `id-${Date.now()}`;
+let imgSource = ref(null);
+const inputFile = ref(null);
 
-      reader.onload = (event) => {
-        this.imgSource = event.target.result;
-        this.$emit("selected", this.imgSource);
-      };
-      console.log(this.imgSource, "this.imgSource");
-      reader.readAsDataURL(img);
-    }
+const props = defineProps({
+  withEffects: Boolean,
+  imageSrc: String,
+});
 
-  },
+const emitList = defineEmits(["selected"]);
+
+const onFileSelected = (event) => {
+  dragOver.value = false;
+  const img = event.target.files ? event.target.files[0] : null;
+  inputFile.value = null;
+  updateImage(img);
+
+  if (props.withEffects) {
+    store.dispatch("setEffectModal", true);
+  }
+};
+
+const updateImage = (img) => {
+  const reader = new FileReader();
+
+  reader.onload = (event) => {
+    imgSource.value = event.target.result;
+    emitList("selected", imgSource.value);
+  };
+  console.log(imgSource, "this.imgSource");
+  reader.readAsDataURL(img);
 };
 </script>
 

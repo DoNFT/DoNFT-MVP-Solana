@@ -22,17 +22,15 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { defineProps } from "vue";
 
-export default {
-  name: "NavBar",
-  props: {
-    navigation: {
-      type: Array,
-      default: () => [],
-    },
+defineProps({
+  navigation: {
+    type: Array,
+    default: () => [],
   },
-};
+});
 </script>
 
 <style lang="scss">

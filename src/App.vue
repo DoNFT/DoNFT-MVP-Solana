@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="app">
     <notifications group="foo" />
 
     <!-- <div v-if="getContractLoading" class="loading-container loading-container--app">
@@ -20,19 +20,23 @@
 import { useStore } from "vuex";
 import { onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import HeadBar from "@/components/HeadBar/HeadBar.vue";
 import { useWallet } from "solana-wallets-vue";
+import HeadBar from "@/components/HeadBar/HeadBar.vue";
 
-const { connected } = useWallet();
+const { connected, wallet } = useWallet();
 const store = useStore();
 const router = useRouter();
 
 onMounted(() => {
   store.dispatch("setIpfs");
+
+  // todo: move to more proper place
+  if (wallet.value) {
+    store.dispatch("setSolanaWalletInstance", wallet.value);
+  }
 });
 
 watch(() => connected.value, () => {
-  console.log(connected.value, "APP DISCONNECTED!");
   if (connected.value === false) {
     store.dispatch("setWalletDisconnected");
     router.push({ name: "LoginView" });

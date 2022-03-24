@@ -36,91 +36,87 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import NavBar from "@/components/NavBar/NavBar";
 import Uploader from "@/components/Uploader/Uploader";
-import StatusType from "@/mixins/StatusMixin";
 import {
   actions,
 } from "@metaplex/js";
-import { mapActions, mapGetters } from "vuex";
+import { reactive, computed, onMounted } from "vue";
+import { useStore } from "vuex";
+// import StatusType from "@/mixins/StatusMixin";
 
-export default {
-  name: "CreateNFT",
+const store = useStore();
 
-  components: {
-    NavBar,
-    Uploader,
+const nftObj = reactive({
+  name: "NFT token 2 title",
+  symbol: "",
+  seller_fee_basis_points: 0,
+  external_url: "",
+  description: "NFT token 2 description",
+  image: "",
+  properties: {
+    files: [
+      {
+        uri: "",
+        type: "image/jpeg"
+      }
+    ],
+    category: "image",
+    creators: [
+      {
+        "address": "8BZZo3mv9xjdrhpJgBAYQDYmsAkgJdW3riaJPJTL4gYz",
+        "share": 100
+      }
+    ]
   },
+  collection: null,
+  use: null
+});
 
-  mixins: [StatusType],
+const getNavigation = [{
+  text: "Back to Gallery",
+  name: "ChooseNFT",
+}];
 
-  data() {
-    return {
-      nftObj: {
-        name: "NFT token 2 title",
-        symbol: "",
-        seller_fee_basis_points: 0,
-        external_url: "",
-        description: "NFT token 2 description",
-        image: "",
-        properties: {
-          files: [
-            {
-              uri: "",
-              type: "image/jpeg"
-            }
-          ],
-          category: "image",
-          creators: [
-            {
-              "address": "8BZZo3mv9xjdrhpJgBAYQDYmsAkgJdW3riaJPJTL4gYz",
-              "share": 100
-            }
-          ]
-        },
-        collection: null,
-        use: null
-      },
-      getNavigation: [
-        {
-          text: "Back to Gallery",
-          name: "ChooseNFT",
-        },
-      ],
-      notificationVisible: false,
-    };
+const getSolanaWalletInstance = computed({
+  get() {
+    return store.getters["getSolanaWalletInstance"];
   },
+});
 
-  computed: {
-    ...mapGetters([
-      "getSolanaWalletInstance",
-      "getSolanaInstance",
-      "getNFTdeployResult",
-    ]),
+const getSolanaInstance = computed({
+  get() {
+    return store.getters["getSolanaInstance"];
   },
+});
 
-  mounted() {
-    console.log(actions, "actions");
+const getNFTdeployResult = computed({
+  get() {
+    return store.getters["getNFTdeployResult"];
   },
-  methods: {
-    ...mapActions(["setDeployToIPFS"]),
+});
 
-    setUploadedImg(src) {
-      this.nftObj.image = src; 
-    },
-    async createNewNFT() {
+onMounted(() => {
+  console.log(actions, "actions");
+});
 
-      await this.setDeployToIPFS(this.nftObj);
-
-      console.log(this.getNFTdeployResult, "CREATING");
-      actions.mintNFT({
-        connection: this.getSolanaInstance,
-        wallet: this.getSolanaWalletInstance,
-        uri: this.getNFTdeployResult,
-        maxSupply: 1
-      });
-    }
-  }
+const setUploadedImg = (img) => {
+  nftObj.image = img; 
 };
+
+const createNewNFT = async (img) => {
+  nftObj.image = img; 
+
+  await store.dispatch("setDeployToIPFS", nftObj);
+
+  console.log(getNFTdeployResult, "CREATING");
+  actions.mintNFT({
+    connection: getSolanaInstance.value,
+    wallet: getSolanaWalletInstance.value,
+    uri: getNFTdeployResult.value,
+    maxSupply: 1
+  });
+};
+
 </script>

@@ -8,7 +8,6 @@
     <div class="headbar__acc">
       <div class="headbar__acc-info">
         <!-- <span>Balance:</span> <b>{{ accBalance }}</b> -->
-        <svg-icon width="50" height="50" :iconType="'PauseSvg'" iconColor="white"/>
       </div>
       <!-- <a
         class="link"
@@ -25,7 +24,6 @@ import { watch } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { WalletMultiButton, useWallet } from "solana-wallets-vue";
-import SvgIcon from "@/components/IconComponent/Icon";
 
 const { connected } = useWallet();
 const store = useStore();
