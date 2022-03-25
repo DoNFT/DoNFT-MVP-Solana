@@ -1,23 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
-// import store from "@/store";
-
+import { initWallet, useWallet } from "solana-wallets-vue";
+import store from "@/store";
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-
-const walletOptions = {
-  wallets: [
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter({ network: "devnet" }),
-  ],
-  autoConnect: true,
-};
-
-import { initWallet, useWallet } from "solana-wallets-vue";
-initWallet(walletOptions);
-
-const { connecting, connected } = useWallet();
 
 const routes = [
   {
@@ -50,9 +37,38 @@ const router = createRouter({
   routes,
 });
 
-router.beforeResolve((to, _from, next) => {
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+// its here for using router push
+const walletOptions = {
+  wallets: [
+    new PhantomWalletAdapter(),
+    new SolflareWalletAdapter({ network: "devnet" }),
+  ],
+  autoConnect: true,
+  onError: (errorData) => {
+    // Error of rejecting on auth
+    console.log(router, "router");
+    if (errorData.error && errorData.error.code === 4001) {
+      console.log(errorData, "Errordata2");
+      router.push({ name: "LoginView"});
+    } 
+  }
+};
 
+initWallet(walletOptions);
+
+const { connecting, connected, disconnecting, wallet } = useWallet();
+
+router.beforeEach(async (to, _from, next) => {
+  // wallet.value._events.onReadyStateChange(() => console.log("READY STATE"));
+  // console.log(ready, "wallet.value.readyState");
+  if (wallet.value) {
+    store.dispatch("setSolanaWalletInstance", wallet.value);
+  }
+
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  console.log(connected.value, "connected");
+  console.log(connecting.value, "connecting");
+  console.log(disconnecting.value, "disconnecting");
   // todo: try to change to a better checking? currently, this is most stable way
   // to get info about auth of user, other things do not work, as it too early for plugin
   // https://github.com/lorisleiva/solana-wallets-vue?ref=vuejsexamples.com

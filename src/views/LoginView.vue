@@ -20,54 +20,7 @@
 </template>
 
 <script setup>
-import { watch } from "vue";
-import { WalletMultiButton, useWallet } from "solana-wallets-vue";
-import { useStore } from "vuex";
-import { useRouter } from "vue-router";
-
-const { connected, publicKey } = useWallet();
-const store = useStore();
-const router = useRouter();
-
-watch(() => connected.value, () => {
-  console.log(connected.value, "CONNECTED!");
-  if (connected.value) {
-    store.dispatch("setConnected", publicKey.toString());
-    router.push({ name: "ChooseNFT" });
-  }
-});
-
-// export default {
-//   name: "LoginView",
-//   data() {
-//     return {
-//       phantomWallet: null,
-//       publicWalletAddress: "",
-//       phantom: null,
-//     };
-//   },
-
-//   components: {
-//     modalDialog,
-//   },
-
-//   computed: {
-//     ...mapGetters(["getDialogWalletStatus"]),
-//   },
-
-//   mounted() {
-//     if (this.getCurrentWallet || sessionStorage.getItem("solana_wallet_address")) {
-//       this.$router.push({ name: "ChooseNFT" });
-//     }
-//   },
-
-//   methods: {
-//     ...mapActions(["setWalletDialog"]),
-//     toggleWalletDialog() {
-//       this.setWalletDialog(!this.getDialogWalletStatus);
-//     },
-//   },
-// };
+import { WalletMultiButton } from "solana-wallets-vue";
 </script>
 
 <style scoped>

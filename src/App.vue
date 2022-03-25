@@ -1,17 +1,20 @@
 <template>
-  <div class="app">
+  <div class="app-page">
     <notifications group="foo" />
 
-    <!-- <div v-if="getContractLoading" class="loading-container loading-container--app">
-      <spinner :size="92" color="#000" />
-    </div> -->
-
-
-    <HeadBar v-if="connected"/>
-
-    <div class="container">
-      <router-view />
+    <!-- Currently problem in that, Phantom wallet disconnecting by himself after 5-10 minutes of login-->
+    <div v-if="connecting" class="loading-container loading-container--app">
+      <spinner :size="82" color="#000" />
+      <h1 v-if="connecting">Signing to wallet</h1>
     </div>
+
+    <template v-else>
+      <HeadBar v-if="connected"/>
+
+      <div class="container">
+        <router-view />
+      </div>
+    </template>
 
   </div>
 </template>
@@ -22,43 +25,31 @@ import { onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useWallet } from "solana-wallets-vue";
 import HeadBar from "@/components/HeadBar/HeadBar.vue";
+import Spinner from "@/components/Spinner";
 
-const { connected, wallet } = useWallet();
+const { connected, connecting, publicKey } = useWallet();
 const store = useStore();
 const router = useRouter();
+const route = router.currentRoute;
 
 onMounted(() => {
   store.dispatch("setIpfs");
-
-  // todo: move to more proper place
-  if (wallet.value) {
-    store.dispatch("setSolanaWalletInstance", wallet.value);
-  }
 });
 
 watch(() => connected.value, () => {
+  console.log(connected.value, "CONNECTED! vue");
+  console.log(connecting.value, "connecting vue!");
+  console.log(route.value, "route vue!");
   if (connected.value === false) {
     store.dispatch("setWalletDisconnected");
     router.push({ name: "LoginView" });
   }
+
+  if (route.value.name === "LoginView" && (connecting.value || connected.value)) {
+    store.dispatch("setConnected", publicKey.toString());
+    router.push({ name: "ChooseNFT" });
+  }
 });
-
-// export default {
-//   mounted() {
-//     let sessionAddress = sessionStorage.getItem('solana_wallet_address');
-
-//     console.log(this.$route, 'this.$route adress');
-//     if (this.$router.name === 'Login' && sessionAddress) {
-//       this.$router.replace({ name: 'ChooseNFT' });
-//     }
-//   },
-//   methods: {
-//     ...mapActions([
-//       'setIpfs',
-//     ]),
-//     ...mapMutations(['setConnected']),
-//   },
-// };
 </script>
 
 <style lang="scss">
