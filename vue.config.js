@@ -10,8 +10,9 @@ module.exports = defineConfig({
   configureWebpack: {
     resolve: {
       fallback: {
-        util: require.resolve("util/"),
-        stream: require.resolve("stream-browserify")
+        util: require.resolve("util"),
+        stream: require.resolve("stream-browserify"),
+        crypto: require.resolve("crypto-browserify"),
       }
     },
     module: {

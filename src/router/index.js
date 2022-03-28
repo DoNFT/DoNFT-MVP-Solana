@@ -6,6 +6,11 @@ import {
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 
+import CreateNFT from "@/views/CreateNFT";
+import SendNFT from "@/views/SendNFT";
+import ChooseNFT from "@/views/ChooseNFT";
+import NFTDetails from "@/views/NFTDetails";
+
 const routes = [
   {
     path: "/",
@@ -21,14 +26,26 @@ const routes = [
   {
     path: "/create_nft",
     name: "CreateNFT",
-    component: () => import(/* webpackChunkName: "CreateNFT" */ "@/views/CreateNFT.vue"),
+    component: CreateNFT,
+    meta: { title: "Do[NFT]", requiresAuth: true }
+  },
+  {
+    path: "/send_nft",
+    name: "SendNFT",
+    component: SendNFT,
     meta: { title: "Do[NFT]", requiresAuth: true }
   },
   {
     path: "/choose_nft",
     name: "ChooseNFT",
+    component: ChooseNFT,
     meta: { title: "Do[NFT]", requiresAuth: true },
-    component: () => import(/* webpackChunkName: "ChooseNFT" */ "@/views/ChooseNFT.vue"),
+  },
+  {
+    path: "/nft_details/:id",
+    name: "NFTDetails",
+    component: NFTDetails,
+    meta: { title: "Do[NFT]", requiresAuth: true }
   },
 ];
 

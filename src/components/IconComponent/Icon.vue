@@ -1,5 +1,5 @@
 <template>
-  <div :style="iconStyle">
+  <div :style="iconStyle" class="icon-box">
     <component :is="iconType"></component>
   </div>
 </template>
@@ -41,3 +41,11 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>

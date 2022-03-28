@@ -105,8 +105,8 @@ const setUploadedImg = (img) => {
   nftObj.image = img; 
 };
 
-const createNewNFT = async (img) => {
-  nftObj.image = img; 
+const createNewNFT = async () => {
+  console.log(nftObj, "NFT OBJ");
 
   await store.dispatch("setDeployToIPFS", nftObj);
 

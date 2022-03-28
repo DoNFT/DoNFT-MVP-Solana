@@ -1,6 +1,10 @@
 import untar from "js-untar";
 const CID_RE = /Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,}/m;
 
+import { clusterApiUrl } from "@solana/web3.js";
+import { getParsedNftAccountsByOwner, isValidSolanaAddress, createConnectionConfig } from "@nfteyez/sol-rayz";
+
+
 async function pushImageToIpfs(ipfsInstance, objectURL) {
   let cidV1 = "";
   try {
@@ -54,8 +58,6 @@ export async function deployNFTtoIPFS(ipfsInstance, meta) {
     }
   };
   const metaDataCID = await pushObjectToIpfs(ipfsInstance, uriJSON);
-  console.log(uriJSON, "metaDATA");
-  console.log(metaDataCID, "metaDataCID");
   return `https://ipfs.io/ipfs/${metaDataCID.path}`;
 }
 
@@ -64,13 +66,46 @@ export async function getImageForTokenByURI(ipfsInstance, imageAddress) {
   if (imageAddress) {
     if (imageAddress.startsWith("ipfs") || imageAddress.startsWith("https://ipfs"))  {
       let cid = CID_RE.exec(imageAddress)?.[0];
-      let localImageURL = await getImageFromIpfs(ipfsInstance, cid);
+      let localImageURL = await getDataFromIPFS(ipfsInstance, cid);
       image = localImageURL;
     } else {
       image = imageAddress;
     }
   }
   return image;
+}
+
+async function getDataFromIPFS(ipfsInstance, cid) {
+  let tokenData = null;
+  try {
+    if (cid === "" || cid === null || cid === undefined) {
+      return;
+    }
+    let content = [];
+    for await (const buff of ipfsInstance.cat(cid, { timeout: 6000 })) {
+      if (buff) {
+        content.push(buff);
+      }
+    }
+    tokenData = Buffer.concat(content).toString();
+    tokenData = JSON.parse(tokenData);
+    
+    if (tokenData.image.startsWith("ipfs") || tokenData.image.startsWith("https://ipfs"))  {
+      let cid = CID_RE.exec(tokenData.image)?.[0];
+      let data = {
+        ...tokenData,
+        image: null,
+      };
+
+      data.image = await getImageFromIpfs(ipfsInstance, cid);
+
+      return data;
+    } else {
+      return tokenData;
+    }
+  } catch (e) {
+    console.log(e, `getImageFromIpfs ERROR ${cid}`);
+  }
 }
 
 async function getImageFromIpfs(ipfsInstance, cid) {
@@ -98,4 +133,26 @@ async function loadFileFromIPFS(ipfs, cid, timeout) {
   let archive = (await untar(archiveArrayBuffer))?.[0];
 
   return archive.blob;
+}
+
+export async function loadAllNFTs(walletInstance) {
+  try {
+    const connect = createConnectionConfig(clusterApiUrl("devnet"));
+    const provider = walletInstance;
+    console.log(provider, "provider");
+    let ownerToken = provider.publicKey.toString();
+    console.log(ownerToken, "ownerToken");
+    const result = isValidSolanaAddress(ownerToken);
+    console.log("result", result);
+    console.log("connect", connect);
+    let nfts = await getParsedNftAccountsByOwner({
+      publicAddress: ownerToken,
+      connection: connect,
+      serialization: true,
+    });
+    console.log("nfts", nfts);
+    return nfts;
+  } catch (error) {
+    console.log(error);
+  }
 }

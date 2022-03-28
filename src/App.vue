@@ -21,7 +21,7 @@
 
 <script setup>
 import { useStore } from "vuex";
-import { onMounted, watch } from "vue";
+import { onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useWallet } from "solana-wallets-vue";
 import HeadBar from "@/components/HeadBar/HeadBar.vue";
@@ -32,8 +32,15 @@ const store = useStore();
 const router = useRouter();
 const route = router.currentRoute;
 
-onMounted(() => {
-  store.dispatch("setIpfs");
+const getAllNFTs = computed({
+  get() {
+    return store.getters["getAllNFTs"];
+  },
+});
+
+onMounted(async () => {
+  await store.dispatch("setIpfs");
+  console.log(connecting.value, "connecting.value.value");
 });
 
 watch(() => connected.value, () => {
@@ -43,6 +50,15 @@ watch(() => connected.value, () => {
   if (connected.value === false) {
     store.dispatch("setWalletDisconnected");
     router.push({ name: "LoginView" });
+  }
+
+  // todo: add CHECKING with TOTAL NFT value
+
+  // getting list of NFTs
+  // cause connected unavailable in MOUNTED hook
+  if (connected.value === true && getAllNFTs.value && getAllNFTs.value.length === 0) {
+    store.dispatch("setAllSolanaNFts");
+    console.log(getAllNFTs.value, "getAllNFTs vue!");
   }
 
   if (route.value.name === "LoginView" && (connecting.value || connected.value)) {
