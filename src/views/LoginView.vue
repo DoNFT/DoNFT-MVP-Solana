@@ -1,13 +1,13 @@
 <template>
   <div class="home-text">
     <div class="home-text__inner">
-      <h1>Welcome to DoNFT demo on Near</h1>
+      <div class="home-text__inner__header">
+        <h2>Welcome to DoNFT demo on Solana</h2>
+        <img src="@/assets/solana-sol-logo.png" />
+      </div>
       <p class="home-text__inner__subtext">
         Use power of neural network algorithms to create new unique combinations
         of digital art
-      </p>
-      <p v-if="connected" class="home-text__inner__subtext">
-        Go ahead and click the button below to try it out:
       </p>
       <p
         style="text-align: center; margin-top: 2.5em"
@@ -15,7 +15,7 @@
         <wallet-multi-button dark></wallet-multi-button>
       </p>
     </div>
-    <img src="@/assets/home_img.jpg" style="height: 30%; border-radius: 20%" />
+    <img class="home-text__logo" src="@/assets/home_img.jpg" style="height: 30%; border-radius: 20%" />
   </div>
 </template>
 
@@ -23,7 +23,7 @@
 import { WalletMultiButton } from "solana-wallets-vue";
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .home-text {
   display: flex;
   justify-content: space-evenly;
@@ -38,7 +38,18 @@ import { WalletMultiButton } from "solana-wallets-vue";
   width: 50%;
 }
 
-.home-text img {
+.home-text__inner__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  img {
+    height: 130px;
+    margin-left: 40px;
+  }
+}
+
+.home-text__logo {
   width: 30%;
   margin-left: 20px;
 }

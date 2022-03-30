@@ -1,11 +1,15 @@
 import { StatusType } from "@/utilities";
+import { computed } from "vue";
 
-export default {
-  computed: {
-    statusText() {
-      switch (this.getStatus) {
+export default function(getStatus) {
+  console.log(getStatus, "getStatus");
+  const statusText = computed({
+    get() {
+      switch (getStatus) {
       case StatusType.Approving:
-        return "Redirecting to Approve NFT";
+        return "Approve Transaction";
+      case StatusType.Sending:
+        return "Sending Transaction...";
       case StatusType.Applying:
         return "Applying the chosen effect...";
       case StatusType.DeployingToIPFS:
@@ -18,5 +22,10 @@ export default {
         return "";
       }
     },
-  }
-};
+  });
+  
+  return {
+    statusText: statusText.value,
+    StatusType,
+  };
+}

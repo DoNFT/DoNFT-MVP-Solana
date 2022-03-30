@@ -21,6 +21,7 @@ export default createStore({
     status: StatusType.ChoosingParameters,
     allNFTs: [],
     currentNFT: {},
+    walletError: false,
   },
   mutations: {
     setStatus (state, status) {
@@ -55,6 +56,7 @@ export default createStore({
       state.solanaWalletAddress = null;
       state.solanaInstance = null;
       state.solanaWalletInstance = null;
+      state.allNFTs = [];
       sessionStorage.removeItem("solana_wallet_address", null);
     },
     SET_SOLANA_INSTANCE(state, payload) {
@@ -62,6 +64,9 @@ export default createStore({
     },
     SET_CURRENT_WALLET(state, payload) {
       state.solanaWalletInstance = payload;
+    },
+    SET_WALLET_ERROR(state, payload) {
+      state.walletError = payload;
     },
   },
   actions: {
@@ -105,6 +110,9 @@ export default createStore({
     setSolanaWalletInstance ({commit}, payload) {
       commit("SET_CURRENT_WALLET", payload);
     },
+    setWalletError ({commit}, payload) {
+      commit("SET_WALLET_ERROR", payload);
+    },
     async setAllSolanaNFts ({commit, getters}) {
       commit("SET_LOADING_NFTS", true);
       commit("SET_ALL_NFTS", await loadAllNFTs(getters.getSolanaInstance, getters.getSolanaWalletInstance));
@@ -123,5 +131,6 @@ export default createStore({
     getStatus: state => state.status,
     getCurrentNFT: state => state.currentNFT,
     getLoadingNFTsStatus: state => state.loadingNFTs,
+    getWalletError: state => state.walletError,
   },
 });

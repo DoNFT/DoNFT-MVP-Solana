@@ -5,11 +5,15 @@ import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
+import { notify } from "@kyvg/vue3-notification";
+import statusMixin from "@/mixins/StatusMixin";
 
 import CreateNFT from "@/views/CreateNFT";
 import SendNFT from "@/views/SendNFT";
 import ChooseNFT from "@/views/ChooseNFT";
 import NFTDetails from "@/views/NFTDetails";
+
+const { StatusType } = statusMixin();
 
 const routes = [
   {
@@ -66,7 +70,14 @@ const walletOptions = {
     console.log(router, "router");
     if (errorData.error && errorData.error.code === 4001) {
       console.log(errorData, "Errordata2");
-      router.push({ name: "LoginView"});
+      notify({
+        type: "error",
+        title: "Wallet error",
+        text: errorData.error.message,
+        duration: 6000,
+      });
+      store.dispatch("setWalletError", true);
+      store.dispatch("setStatus", StatusType.ChoosingParameters);
     } 
   }
 };
@@ -77,10 +88,7 @@ const { connecting, connected, disconnecting, wallet } = useWallet();
 
 router.beforeEach(async (to, _from, next) => {
   // wallet.value._events.onReadyStateChange(() => console.log("READY STATE"));
-  // console.log(ready, "wallet.value.readyState");
-  if (wallet.value) {
-    store.dispatch("setSolanaWalletInstance", wallet.value);
-  }
+  console.log(wallet.value, "wallet.value");
 
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   console.log(connected.value, "connected");

@@ -3,7 +3,7 @@
     <nav-bar :navigation="getNavigation"/>
     <main>
       <h1>Create new NFT</h1>
-      <form class="form-nft">
+      <div class="form-nft">
         <uploader @selected="setUploadedImg"/>
         <div class="form-ntf__inputs">
           <span class="form-nft-send__inputs-title">Contract</span>
@@ -31,22 +31,39 @@
             @click.prevent="createNewNFT"
           >Submit</button>
         </div>
-      </form>
+      </div>
+      <div
+        v-if="[
+          StatusType.Approving,
+          StatusType.Sending,
+          StatusType.Minting,
+        ].includes(getStatus)" class="loading-container"
+      >
+        <spinner :size="92" color="#000" />
+        <h2>{{ getStatusText(getStatus) }}</h2>
+      </div>
+
     </main>
   </div>
 </template>
 
 <script setup>
-import NavBar from "@/components/NavBar/NavBar";
-import Uploader from "@/components/Uploader/Uploader";
 import {
   actions,
 } from "@metaplex/js";
 import { reactive, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useStore } from "vuex";
-// import StatusType from "@/mixins/StatusMixin";
+import statusMixin from "@/mixins/StatusMixin";
+import { notify } from "@kyvg/vue3-notification";
+
+import NavBar from "@/components/NavBar/NavBar";
+import Uploader from "@/components/Uploader/Uploader";
+import Spinner from "@/components/Spinner";
 
 const store = useStore();
+const router = useRouter();
+const { StatusType } = statusMixin();
 
 const nftObj = reactive({
   name: "NFT token 2 title",
@@ -85,6 +102,12 @@ const getSolanaWalletInstance = computed({
   },
 });
 
+const getStatus = computed({
+  get() {
+    return store.getters["getStatus"];
+  },
+});
+
 const getSolanaInstance = computed({
   get() {
     return store.getters["getSolanaInstance"];
@@ -107,16 +130,53 @@ const setUploadedImg = (img) => {
 
 const createNewNFT = async () => {
   console.log(nftObj, "NFT OBJ");
+  try {
+    const connection = getSolanaInstance.value;
 
-  await store.dispatch("setDeployToIPFS", nftObj);
+    store.dispatch("setStatus", StatusType.DeployingToIPFS);
+    await store.dispatch("setDeployToIPFS", nftObj);
 
-  console.log(getNFTdeployResult, "CREATING");
-  actions.mintNFT({
-    connection: getSolanaInstance.value,
-    wallet: getSolanaWalletInstance.value,
-    uri: getNFTdeployResult.value,
-    maxSupply: 1
-  });
+    store.dispatch("setStatus", StatusType.Approving);
+    console.log(getNFTdeployResult, "CREATING");
+    const signature = await actions.mintNFT({
+      connection,
+      wallet: getSolanaWalletInstance.value,
+      uri: getNFTdeployResult.value,
+      maxSupply: 1
+    });
+    console.log("signature 1", signature);
+    store.dispatch("setStatus", StatusType.Minting);
+    const response = await connection.confirmTransaction(signature.txId, "processed");
+    console.log("response signature 2", response);
+
+    if (response.value && response.value.err === null) {
+      store.dispatch("setStatus", StatusType.ChoosingParameters);
+      store.dispatch("setAllSolanaNFts");
+      router.push({ name: "ChooseNFT"});
+      notify({
+        title: "Transaction status",
+        type: "success",
+        text: "NFT successfully Minted!",
+        duration: 6000,
+      });
+    }
+
+  } catch(err) {
+    console.log(err, "ERRROR createNewNFT");
+    store.dispatch("setStatus", StatusType.ChoosingParameters);
+    notify({
+      title: "Transaction status",
+      type: "error",
+      text: `Something wrong, Error: ${err}`,
+      duration: 6000,
+    });
+  }
 };
 
+const getStatusText = (status) => {
+  const statusData = statusMixin(status);
+  console.log(statusData, "statusData");
+
+  return statusData.statusText;
+};
 </script>

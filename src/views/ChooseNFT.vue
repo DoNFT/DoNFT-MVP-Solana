@@ -160,6 +160,10 @@ const chooseNFT = (item) => {
   }
 }
 
+.nft-cards__title {
+  margin-top: 20px;
+}
+
 h1 {
   margin-bottom: 30px;
 }

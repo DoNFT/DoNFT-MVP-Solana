@@ -188,9 +188,18 @@ li {
 	padding-bottom: 1em;
 }
 
+p {
+	margin: 0
+}
+
 .vue-notification-group {
 	width: 370px!important;
 	top: 20px!important;
+	max-width: 500px;
+}
+
+.notification-content {
+	word-break: break-all;
 }
   
 .vue-notification-group .vue-notification {

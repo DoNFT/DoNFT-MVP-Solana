@@ -41,7 +41,7 @@
             <div class="form-nft__bottom">
               <button
                 class="main-btn"
-                :disabled="true"
+                @click="burnNFTHandler"
               >Burn NFT</button>
               <button
                 class="main-btn"
@@ -67,7 +67,17 @@
         </div>
       </div>
 
-      <div class="bundle-data" v-if="bundleNFTsComputedData">
+      <div
+        v-if="[
+          StatusType.Approving,
+          StatusType.Sending,
+        ].includes(getStatus)" class="loading-container"
+      >
+        <spinner :size="92" color="#000" />
+        <h2>{{ getStatusText(getStatus) }}</h2>
+      </div>
+
+      <!-- <div class="bundle-data" v-if="bundleNFTsComputedData">
         <div class="nft-cards__contract-inner">
           <div
             class="nft-cards__contract__item nft-cards__contract__item--bundle-data"
@@ -82,7 +92,7 @@
             />
           </div>
         </div>
-      </div>
+      </div> -->
     </main>
   </div>
 </template>
@@ -91,6 +101,12 @@
 import { reactive, computed } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
+import { PublicKey } from "@solana/web3.js";
+import { actions } from "@metaplex/js/";
+import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { notify } from "@kyvg/vue3-notification";
+import statusMixin from "@/mixins/StatusMixin";
+
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
 import Spinner from "@/components/Spinner";
@@ -103,10 +119,17 @@ const nftObj = reactive({
 
 const router = useRouter();
 const store = useStore();
+const { StatusType } = statusMixin();
 
 const getAllNFTs = computed({
   get() {
     return store.getters["getAllNFTs"];
+  },
+});
+
+const getStatus = computed({
+  get() {
+    return store.getters["getStatus"];
   },
 });
 
@@ -127,6 +150,18 @@ const getNav = computed({
     ];
   },
 });
+
+const getSolanaInstance = computed({
+  get() {
+    return store.getters["getSolanaInstance"];
+  },
+});
+
+const getSolanaWalletInstance = computed({
+  get() {
+    return store.getters["getSolanaWalletInstance"];
+  },
+});
 console.log(nftObj, "nftObj");
 
 const NFTComputedData = computed({
@@ -140,6 +175,57 @@ const NFTComputedData = computed({
   },
 });
 
+const burnNFTHandler = async () => {
+  console.log(actions, "burnNFTHandler");
+
+  try {
+    const connection = getSolanaInstance.value;
+    let mint = new PublicKey(NFTComputedData.value.mint);
+    const fromWallet = getSolanaWalletInstance.value;
+    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      fromWallet,
+      mint,
+      fromWallet.publicKey
+    );
+    console.log(fromTokenAccount.address.toString(), "fromTokenAccount");
+
+    store.dispatch("setStatus", StatusType.Approving);
+    const signature = await actions.burnToken({
+      connection: connection,
+      wallet: fromWallet,
+      token: fromTokenAccount.address,
+      mint: mint,
+      amount: 1,
+      owner: fromWallet.publicKey,
+    });
+    console.log(signature, "signature");
+    store.dispatch("setStatus", StatusType.Sending);
+    const response = await connection.confirmTransaction(signature.txId, "processed");
+    console.log(response, "response");
+    if (response.value && response.value.err === null) {
+      store.dispatch("setStatus", StatusType.ChoosingParameters);
+      store.dispatch("setAllSolanaNFts");
+      router.push({ name: "ChooseNFT"});
+      notify({
+        title: "Transaction status",
+        type: "success",
+        text: "NFT successfully burned!",
+        duration: 6000,
+      });
+    }
+  } catch(err) {
+    console.log(err, "ERRROR burnNFTHandler");
+    store.dispatch("setStatus", StatusType.ChoosingParameters);
+    notify({
+      title: "Transaction status",
+      type: "error",
+      text: `Something wrong, Error: ${err}`,
+      duration: 6000,
+    });
+  }
+};
+
 const approveNFTHandler = () => {
   console.log("approveNFTHandler");
 };
@@ -152,67 +238,12 @@ const changeFormat = () => {
   console.log("changeFormat");
 };
 
+const getStatusText = (status) => {
+  const statusData = statusMixin(status);
+  console.log(statusData, "statusData");
 
-// export default {
-//   data() {
-//     return {
-//       nftObj: {
-//         receiver_id: "near_testing2.testnet",
-//         token_id: [],
-//         media: "",
-//       },
-//       NFTData: {},
-//       bundleNFTsData: [],
-//     };
-//   },
-
-//   computed: {
-//     ...mapGetters([
-//       "getAllNFTs",
-//       "getStatus",
-//     ]),
-//     bundleNFTsComputedData() {
-//       return this.bundleNFTsData;
-//     },
-//     getNav() {
-//       return [
-//         {
-//           text: "Back to Gallery",
-//           name: "ChooseNFT",
-//           params: null,
-//         },
-//       ];
-//     },
-//     hasBundles() {
-//       return this.NFTComputedData && this.NFTComputedData.bundles && this.NFTComputedData.bundles.length;
-//     },
-//     NFTComputedData() {
-//       return this.getAllNFTs.find((item) => item.mint === this.$route.params.id);
-//     },
-//   },
-
-//   watch: {
-//     getAllNFTs: {
-//       handler(value) {
-//         const data = value.find((item) => item.mint === this.$route.params.id);
-//         if (this.getAllNFTs && data) {
-//           this.NFTData = data;
-//           this.nftObj.media = data.metadata.media;
-//         }
-//       },
-//     },
-//   },
-
-//   methods: {
-//     ...mapActions([
-//       "setNFTApproveId",
-//       "sendNFTByToken",
-//     ]),
-//     changeFormat() {
-//       console.log("changeFormat");
-//     },
-//   },
-// };
+  return statusData.statusText;
+};
 </script>
 
 <style scoped lang="scss">

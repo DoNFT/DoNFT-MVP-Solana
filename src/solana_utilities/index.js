@@ -6,6 +6,7 @@ import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
 export async function loadAllNFTs(solanaInstance, walletInstance) {
   try {
+    console.log(solanaInstance, walletInstance, "loadAllNFTs");
     const provider = walletInstance;
     let ownerToken = provider.publicKey.toString();
     let nfts = await getParsedNftAccountsByOwner({

@@ -19,6 +19,7 @@ export const StatusType = Object.freeze({
   Minting: 4,
   Minted: 5,
   Approved: 6,
+  Sending: 7,
 });
 
 export const getIPFS = () => import(/* webpackChunkName: "ipfs" */ "ipfs-core");
