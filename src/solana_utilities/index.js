@@ -1,9 +1,24 @@
 import untar from "js-untar";
 const CID_RE = /Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,}/m;
 
-import { clusterApiUrl } from "@solana/web3.js";
-import { getParsedNftAccountsByOwner, isValidSolanaAddress, createConnectionConfig } from "@nfteyez/sol-rayz";
+import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
+
+export async function loadAllNFTs(solanaInstance, walletInstance) {
+  try {
+    const provider = walletInstance;
+    let ownerToken = provider.publicKey.toString();
+    let nfts = await getParsedNftAccountsByOwner({
+      publicAddress: ownerToken,
+      connection: solanaInstance,
+      serialization: true,
+    });
+    console.log("nfts", nfts);
+    return nfts;
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 async function pushImageToIpfs(ipfsInstance, objectURL) {
   let cidV1 = "";
@@ -133,26 +148,4 @@ async function loadFileFromIPFS(ipfs, cid, timeout) {
   let archive = (await untar(archiveArrayBuffer))?.[0];
 
   return archive.blob;
-}
-
-export async function loadAllNFTs(walletInstance) {
-  try {
-    const connect = createConnectionConfig(clusterApiUrl("devnet"));
-    const provider = walletInstance;
-    console.log(provider, "provider");
-    let ownerToken = provider.publicKey.toString();
-    console.log(ownerToken, "ownerToken");
-    const result = isValidSolanaAddress(ownerToken);
-    console.log("result", result);
-    console.log("connect", connect);
-    let nfts = await getParsedNftAccountsByOwner({
-      publicAddress: ownerToken,
-      connection: connect,
-      serialization: true,
-    });
-    console.log("nfts", nfts);
-    return nfts;
-  } catch (error) {
-    console.log(error);
-  }
 }

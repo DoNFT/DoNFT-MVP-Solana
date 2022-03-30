@@ -30,7 +30,7 @@ const routes = [
     meta: { title: "Do[NFT]", requiresAuth: true }
   },
   {
-    path: "/send_nft",
+    path: "/send_nft/:id",
     name: "SendNFT",
     component: SendNFT,
     meta: { title: "Do[NFT]", requiresAuth: true }

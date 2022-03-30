@@ -1,7 +1,12 @@
 <template>
   <div class="page">
     <nav-bar :navigation="getNav"/>
-    <main>
+    <div
+      v-if="!NFTComputedData" class="loading-container"
+    >
+      <spinner :size="92" color="#000" />
+    </div>
+    <main v-else>
       <div>
         <h1>Details of NFT</h1>
         <div
@@ -88,6 +93,7 @@ import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
+import Spinner from "@/components/Spinner";
 
 const nftObj = reactive({
   receiver_id: "near_testing2.testnet",

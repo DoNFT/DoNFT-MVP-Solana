@@ -17,6 +17,7 @@ export default createStore({
     solanaWalletAddress: null,
     solanaInstance: null,
     solanaWalletInstance: null,
+    loadingNFTs: false,
     status: StatusType.ChoosingParameters,
     allNFTs: [],
     currentNFT: {},
@@ -27,6 +28,9 @@ export default createStore({
     },
     setIpfs (state, ipfsInstance) {
       state.ipfs = ipfsInstance;
+    },
+    SET_LOADING_NFTS (state, payload) {
+      state.loadingNFTs = payload;
     },
     SET_ALL_NFTS(state, payload) {
       state.allNFTs = payload;
@@ -102,7 +106,9 @@ export default createStore({
       commit("SET_CURRENT_WALLET", payload);
     },
     async setAllSolanaNFts ({commit, getters}) {
-      commit("SET_ALL_NFTS", await loadAllNFTs(getters.getSolanaWalletInstance));
+      commit("SET_LOADING_NFTS", true);
+      commit("SET_ALL_NFTS", await loadAllNFTs(getters.getSolanaInstance, getters.getSolanaWalletInstance));
+      commit("SET_LOADING_NFTS", false);
     },
   },
   getters: {
@@ -116,5 +122,6 @@ export default createStore({
     getSolanaWalletInstance: (state) => state.solanaWalletInstance,
     getStatus: state => state.status,
     getCurrentNFT: state => state.currentNFT,
+    getLoadingNFTsStatus: state => state.loadingNFTs,
   },
 });

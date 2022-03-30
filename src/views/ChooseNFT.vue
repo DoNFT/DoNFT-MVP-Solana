@@ -1,7 +1,12 @@
 <template>
   <div class="page">
     <nav-bar :navigation="getNav"/>
-    <main>
+    <div
+      v-if="getLoadingNFTsStatus" class="loading-container"
+    >
+      <spinner :size="92" color="#000" />
+    </div>
+    <main v-else>
       <h1>Choose NFT and apply effect</h1>
       <div
         class="nft-cards__contract-inner"
@@ -11,10 +16,12 @@
           v-for="nft in getAllNFTs"
           :key="`key-${nft.mint}`"
           class="nft-cards__contract__item"
+          :class="{ 'chosen-card': cardClass(nft.mint)}"
         >
           <token-card
             :metadata="nft"
             :edit-available="true"
+            @click="chooseNFT(nft)"
           />
         </div>
       </div>
@@ -22,23 +29,35 @@
   </div>
 </template>
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, ref } from "vue";
 import { useStore } from "vuex";
-// import { useWallet } from "solana-wallets-vue";
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
-// import { programs } from "@metaplex/js/";
-
-// import { Connection } from "@solana/web3.js";
+import Spinner from "@/components/Spinner";
 
 const store = useStore();
-// const { publicKey } = useWallet();
+let token_id =  ref([]);
 
 const getAllNFTs = computed({
   get() {
     return store.getters["getAllNFTs"];
   },
 });
+
+const getLoadingNFTsStatus = computed({
+  get() {
+    return store.getters["getLoadingNFTsStatus"];
+  },
+});
+
+
+const cardClass = computed({
+  get() {
+    return(idx) => token_id.value.indexOf(idx) !== -1;
+  },
+});
+
+console.log(token_id.value.length, "token_id.value.length");
 
 const getNav = computed({
   get() {
@@ -48,38 +67,34 @@ const getNav = computed({
         name: "CreateNFT",
         params: null,
       },
+      {
+        text: "Send",
+        name: "SendNFT",
+        params: {
+          id: token_id.value && token_id.value.length === 1 ? token_id.value[0] : ""
+        },
+      },
     ];
   },
 });
 
-// const getSolanaInstance = computed({
-//   get() {
-//     return store.getters["getSolanaInstance"];
-//   },
-// });
+const chooseNFT = (item) => {
+  const index = token_id.value.findIndex((_) => _ === item.mint);
 
-// const getSolanaWalletInstance = computed({
-//   get() {
-//     return store.getters["getSolanaWalletInstance"];
-//   },
-// });
+  // Currently approving multiple NFTs is problem,
+  // for this need smart contract, bundle approve + bundle sending
+  if (index > -1) {
+    token_id.value.splice(index, 1);
+  } else {
+    token_id.value.push(item.mint);
+  }
 
-onMounted(async () => {
-  // const connection = new Connection("https://api.devnet.solana.com");
-  // console.log(programs, "programs");
-  // console.log(getSolanaWalletInstance.value.publicKey.toString(), "getSolanaWalletInstance.value.publicKey.toString()");
-  // // const tokenPublicKey = "Gz3vYbpsB2agTsAwedtvtTkQ1CG9vsioqLW3r9ecNpvZ";
-  // // const connection = new Connection("devnet");
-  // console.log(getAllNFTs.value, "getAllNFTs");
-  // console.log(publicKey, "getSolanaWalletInstance.value.publicKey");
-  // // const data = await Metadata.findByOwnerV3(connection, tokenPublicKey);
-  // // console.log(data, "data");
-  // const accounts = await connection.getAccountInfo(
-  //   publicKey.value,
-  //   connection,
-  // );
-  // console.log(accounts, "accounts");
-});
+  // this one for single actions, send or effects page
+  token_id.value && token_id.value.length === 1 ? store.dispatch("setCurrentNFTdata", item) : store.dispatch("setCurrentNFTdata", {});
+
+  // this one for bundle page
+  // this.passChosenTokens(this.nftObj.token_id);
+};
 </script>
 
 <style lang="scss">

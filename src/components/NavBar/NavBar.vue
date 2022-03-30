@@ -6,17 +6,14 @@
         v-for="(item, key) in navigation"
         :key="key"
       >
-        <router-link
-          :class="['navbar__nav-wrap__item', {
+        <button
+          :class="['main-btn navbar__nav-wrap__item', {
             'navbar__nav-wrap__item--disabled': item.params && !item.params.id ? true : false
           }]"
-          :to="{
-            name: item.name,
-            params: item.params ? item.params : {}
-          }"
+          @click="nadleRedirect(item)"
         >
           <span>{{ item.text }}</span>
-        </router-link>
+        </button>
       </div>
     </nav>
   </div>
@@ -24,6 +21,7 @@
 
 <script setup>
 import { defineProps } from "vue";
+import { useRouter } from "vue-router";
 
 defineProps({
   navigation: {
@@ -31,6 +29,11 @@ defineProps({
     default: () => [],
   },
 });
+const router = useRouter();
+
+const nadleRedirect = (item) => {
+  router.push({ name: item.name, params: item.params ? item.params : {} });
+};
 </script>
 
 <style lang="scss">
@@ -55,10 +58,10 @@ defineProps({
   max-width: 250px;
   font-size: 24px;
   font-weight: 500;
+  min-width: 215px;
   text-align: center;
   background-color: #5ce9bc;
   border: #000 2px solid;
-  color: #000;
   line-height: 1;
   overflow: hidden;
   transition: background-color 0.15s ease;
@@ -66,6 +69,7 @@ defineProps({
   span {
     position: relative;
     z-index: 10;
+    color: #000;
   }
 
   &:before {
@@ -86,8 +90,10 @@ defineProps({
 .navbar__nav-wrap__item--disabled {
 		box-shadow: none;
 		background-color: rgba(58, 31, 79, .4);
-		color: #00000047;
     pointer-events: none;
+    span {
+      color: #00000047;
+    }
 
 		&:hover {
 			background-color: rgba(58, 31, 79, .4);
@@ -105,7 +111,10 @@ defineProps({
 
 .navbar__nav-wrap__item:hover,
 .navbar__nav-wrap__item:focus {
-  color: #fff;
+
+  span {
+    color: #fff;
+  }
   &:before {
     transform: translateX(0);
   }

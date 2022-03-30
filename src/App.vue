@@ -40,7 +40,6 @@ const getAllNFTs = computed({
 
 onMounted(async () => {
   await store.dispatch("setIpfs");
-  console.log(connecting.value, "connecting.value.value");
 });
 
 watch(() => connected.value, () => {
@@ -58,7 +57,6 @@ watch(() => connected.value, () => {
   // cause connected unavailable in MOUNTED hook
   if (connected.value === true && getAllNFTs.value && getAllNFTs.value.length === 0) {
     store.dispatch("setAllSolanaNFts");
-    console.log(getAllNFTs.value, "getAllNFTs vue!");
   }
 
   if (route.value.name === "LoginView" && (connecting.value || connected.value)) {
