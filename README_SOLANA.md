@@ -42,5 +42,5 @@ https://wiki.nikitavoloboev.xyz/databases/blockchain/solana
 ### This one clearly comparing with Ethereum NFTs tech stack, and show differences
 https://app.buildspace.so/projects/CO77556be5-25e9-49dd-a799-91a2fc29520e/lessons/LE0f8a7abb-1a70-434d-a0d2-b7452d7638e3
 
-Here is result of this tutorial:
-https://solana-nft-auction.vercel.app/
+NFT Lootbox on Solana, here is result of this tutorial:
+https://solana-nft-lootbox.vercel.app/
