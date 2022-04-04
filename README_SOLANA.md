@@ -33,3 +33,14 @@ https://github.com/metaplex-foundation/metaplex-program-library
 ANCHOR ---> Solana framework, which gonna help with developing of smart contract on Solana,
 and serializing/deserializing of data in frontend, and some other stuff
 https://project-serum.github.io/anchor/getting-started/introduction.html
+
+
+### ALL INFO ABOUT SOLANA
+https://wiki.nikitavoloboev.xyz/databases/blockchain/solana
+
+### Website with tutorials on Solana
+### This one clearly comparing with Ethereum NFTs tech stack, and show differences
+https://app.buildspace.so/projects/CO77556be5-25e9-49dd-a799-91a2fc29520e/lessons/LE0f8a7abb-1a70-434d-a0d2-b7452d7638e3
+
+Here is result of this tutorial:
+https://solana-nft-auction.vercel.app/
