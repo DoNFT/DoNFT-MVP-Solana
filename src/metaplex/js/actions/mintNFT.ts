@@ -65,21 +65,23 @@ export const mintNFT = async ({
       verified,
     });
     console.log(creator, 'creator')
-
     memo = [...memo, creator];
 
     return memo;
   }, []);
 
   console.log(creatorsData, 'creatorsData')
+  console.log(seller_fee_basis_points, 'seller_fee_basis_points')
 
   const metadataData = new MetadataDataData({
     name,
     symbol,
     uri,
-    sellerFeeBasisPoints: seller_fee_basis_points,
+    sellerFeeBasisPoints: 0,
     creators: creatorsData,
   });
+
+  console.log(metadataData, 'metadataData')
 
   const createMetadataTx = new CreateMetadata(
     {
@@ -93,6 +95,8 @@ export const mintNFT = async ({
       mintAuthority: wallet.publicKey,
     },
   );
+
+  console.log(createMetadataTx, 'createMetadataTx')
 
   const masterEditionTx = new CreateMasterEdition(
     { feePayer: wallet.publicKey },

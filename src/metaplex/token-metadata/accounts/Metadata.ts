@@ -28,6 +28,15 @@ export class Creator extends Borsh.Data<CreatorArgs> {
   address: StringPublicKey;
   verified: boolean;
   share: number;
+
+  constructor(args: CreatorArgs) {
+    console.log(args, 'args')
+    console.log(Creator.SCHEMA, 'SCHEMA')
+    super(args);
+    this.address = args.address;
+    this.verified = args.verified;
+    this.share = args.share;
+  }
 }
 
 type DataArgs = {

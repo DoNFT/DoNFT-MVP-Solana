@@ -31,6 +31,8 @@ type CreateMasterEditionParams = {
 
 export class CreateMasterEdition extends Transaction {
   constructor(options: TransactionCtorFields, params: CreateMasterEditionParams) {
+    console.log(options, 'options CreateMasterEdition')
+    console.log(params, 'params CreateMasterEdition')
     super(options);
     const { feePayer } = options;
     const { edition, metadata, updateAuthority, mint, mintAuthority, maxSupply } = params;
