@@ -9,14 +9,19 @@
   },
   "dependencies": {
     "@kyvg/vue3-notification": "^2.3.4",
+    "@metaplex-foundation/mpl-token-metadata": "^2.1.0",
     "@metaplex/js": "^4.12.0",
     "@nfteyez/sol-rayz": "^0.10.2",
     "@project-serum/sol-wallet-adapter": "^0.2.6",
     "@solana/buffer-layout": "^4.0.0",
-    "@solana/spl-token": "^0.2.0",
+    "@solana/spl-token": "^0.1.8",
     "@solana/wallet-adapter-wallets": "^0.15.5",
     "@solana/web3.js": "1.32.0",
     "axios": "^0.26.0",
+    "bn.js": "^5.2.0",
+    "borsh": "^0.4.0",
+    "bs58": "^4.0.1",
+    "buffer": "^6.0.3",
     "core-js": "^3.8.3",
     "ipfs-core": "^0.12.0",
     "js-untar": "^2.0.0",
@@ -64,6 +69,9 @@
     "parserOptions": {
       "parser": "@typescript-eslint/parser"
     },
+    "ignorePatterns": [
+      "src/metaplex/*"
+    ],
     "rules": {
       "indent": [
         2

@@ -101,10 +101,10 @@
 import { reactive, computed } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-import { PublicKey } from "@solana/web3.js";
-import { actions } from "@metaplex/js/";
-import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
-import { notify } from "@kyvg/vue3-notification";
+// import { PublicKey } from "@solana/web3.js";
+// import { actions } from "@metaplex/js/";
+// import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+// import { notify } from "@kyvg/vue3-notification";
 import statusMixin from "@/mixins/StatusMixin";
 
 import NavBar from "@/components/NavBar/NavBar";
@@ -151,17 +151,17 @@ const getNav = computed({
     },
 });
 
-const getSolanaInstance = computed({
-    get() {
-        return store.getters["getSolanaInstance"];
-    },
-});
+// const getSolanaInstance = computed({
+//     get() {
+//         return store.getters["getSolanaInstance"];
+//     },
+// });
 
-const getSolanaWalletInstance = computed({
-    get() {
-        return store.getters["getSolanaWalletInstance"];
-    },
-});
+// const getSolanaWalletInstance = computed({
+//     get() {
+//         return store.getters["getSolanaWalletInstance"];
+//     },
+// });
 console.log(nftObj, "nftObj");
 
 const NFTComputedData = computed({
@@ -175,56 +175,56 @@ const NFTComputedData = computed({
     },
 });
 
-const burnNFTHandler = async () => {
-    console.log(actions, "burnNFTHandler");
+// const burnNFTHandler = async () => {
+//     console.log(actions, "burnNFTHandler");
 
-    try {
-        const connection = getSolanaInstance.value;
-        let mint = new PublicKey(NFTComputedData.value.mint);
-        const fromWallet = getSolanaWalletInstance.value;
-        const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
-            connection,
-            fromWallet,
-            mint,
-            fromWallet.publicKey
-        );
-        console.log(fromTokenAccount.address.toString(), "fromTokenAccount");
+//     try {
+//         const connection = getSolanaInstance.value;
+//         let mint = new PublicKey(NFTComputedData.value.mint);
+//         const fromWallet = getSolanaWalletInstance.value;
+//         const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
+//             connection,
+//             fromWallet,
+//             mint,
+//             fromWallet.publicKey
+//         );
+//         console.log(fromTokenAccount.address.toString(), "fromTokenAccount");
 
-        store.dispatch("setStatus", StatusType.Approving);
-        const signature = await actions.burnToken({
-            connection: connection,
-            wallet: fromWallet,
-            token: fromTokenAccount.address,
-            mint: mint,
-            amount: 1,
-            owner: fromWallet.publicKey,
-        });
-        console.log(signature, "signature");
-        store.dispatch("setStatus", StatusType.Sending);
-        const response = await connection.confirmTransaction(signature.txId, "processed");
-        console.log(response, "response");
-        if (response.value && response.value.err === null) {
-            store.dispatch("setStatus", StatusType.ChoosingParameters);
-            store.dispatch("setAllSolanaNFts");
-            router.push({ name: "ChooseNFT"});
-            notify({
-                title: "Transaction status",
-                type: "success",
-                text: "NFT successfully burned!",
-                duration: 6000,
-            });
-        }
-    } catch(err) {
-        console.log(err, "ERRROR burnNFTHandler");
-        store.dispatch("setStatus", StatusType.ChoosingParameters);
-        notify({
-            title: "Transaction status",
-            type: "error",
-            text: `Something wrong, Error: ${err}`,
-            duration: 6000,
-        });
-    }
-};
+//         store.dispatch("setStatus", StatusType.Approving);
+//         const signature = await actions.burnToken({
+//             connection: connection,
+//             wallet: fromWallet,
+//             token: fromTokenAccount.address,
+//             mint: mint,
+//             amount: 1,
+//             owner: fromWallet.publicKey,
+//         });
+//         console.log(signature, "signature");
+//         store.dispatch("setStatus", StatusType.Sending);
+//         const response = await connection.confirmTransaction(signature.txId, "processed");
+//         console.log(response, "response");
+//         if (response.value && response.value.err === null) {
+//             store.dispatch("setStatus", StatusType.ChoosingParameters);
+//             store.dispatch("setAllSolanaNFts");
+//             router.push({ name: "ChooseNFT"});
+//             notify({
+//                 title: "Transaction status",
+//                 type: "success",
+//                 text: "NFT successfully burned!",
+//                 duration: 6000,
+//             });
+//         }
+//     } catch(err) {
+//         console.log(err, "ERRROR burnNFTHandler");
+//         store.dispatch("setStatus", StatusType.ChoosingParameters);
+//         notify({
+//             title: "Transaction status",
+//             type: "error",
+//             text: `Something wrong, Error: ${err}`,
+//             duration: 6000,
+//         });
+//     }
+// };
 
 const approveNFTHandler = () => {
     console.log("approveNFTHandler");

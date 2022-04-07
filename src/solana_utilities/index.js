@@ -6,7 +6,6 @@ import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
 export async function loadAllNFTs(solanaInstance, walletInstance) {
     try {
-        console.log(solanaInstance, walletInstance, "loadAllNFTs");
         const provider = walletInstance;
         let ownerToken = provider.publicKey.toString();
         let nfts = await getParsedNftAccountsByOwner({
@@ -28,11 +27,9 @@ async function pushImageToIpfs(ipfsInstance, objectURL) {
         let data = null;
         await fetch(objectURL)
             .then(res => {
-                console.log(res, "buffer res");
                 return res.arrayBuffer();
             })
             .then(buffer => {
-                console.log(buffer, "buffer data");
                 data = new Uint8Array(buffer);
             });
         cid = await ipfsInstance.add(data);
@@ -58,8 +55,6 @@ export async function deployNFTtoIPFS(ipfsInstance, meta) {
     let imageCID = await pushImageToIpfs(ipfsInstance, meta.image);
     // let meta = JSON.parse(JSON.stringify(oldMeta));
     // meta.animation_url = `ipfs://${imageCID}`;
-    console.log(ipfsInstance, meta, "metaDATA");
-    console.log(imageCID, "imageCID");
     let uriJSON = {
         ...meta,
         image: `https://ipfs.io/ipfs/${imageCID}`,

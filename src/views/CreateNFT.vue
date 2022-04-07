@@ -48,14 +48,12 @@
 </template>
 
 <script setup>
-import {
-    actions,
-} from "@metaplex/js";
 import { reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import statusMixin from "@/mixins/StatusMixin";
 import { notify } from "@kyvg/vue3-notification";
+import * as actions from "../metaplex/js/actions";
 
 import NavBar from "@/components/NavBar/NavBar";
 import Uploader from "@/components/Uploader/Uploader";
@@ -137,7 +135,6 @@ const createNewNFT = async () => {
         await store.dispatch("setDeployToIPFS", nftObj);
 
         store.dispatch("setStatus", StatusType.Approving);
-        console.log(getNFTdeployResult, "CREATING");
         const signature = await actions.mintNFT({
             connection,
             wallet: getSolanaWalletInstance.value,
