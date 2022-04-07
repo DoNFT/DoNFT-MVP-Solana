@@ -112,9 +112,9 @@ import TokenCard from "@/components/TokenCard/TokenCard";
 import Spinner from "@/components/Spinner";
 
 const nftObj = reactive({
-  receiver_id: "near_testing2.testnet",
-  token_id: [],
-  media: "",
+    receiver_id: "near_testing2.testnet",
+    token_id: [],
+    media: "",
 });
 
 const router = useRouter();
@@ -122,127 +122,127 @@ const store = useStore();
 const { StatusType } = statusMixin();
 
 const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
+    get() {
+        return store.getters["getAllNFTs"];
+    },
 });
 
 const getStatus = computed({
-  get() {
-    return store.getters["getStatus"];
-  },
+    get() {
+        return store.getters["getStatus"];
+    },
 });
 
 const getCurrentNFT = computed({
-  get() {
-    return store.getters["getCurrentNFT"];
-  },
+    get() {
+        return store.getters["getCurrentNFT"];
+    },
 });
 
 const getNav = computed({
-  get() {
-    return [
-      {
-        text: "Back to Gallery",
-        name: "ChooseNFT",
-        params: null,
-      },
-    ];
-  },
+    get() {
+        return [
+            {
+                text: "Back to Gallery",
+                name: "ChooseNFT",
+                params: null,
+            },
+        ];
+    },
 });
 
 const getSolanaInstance = computed({
-  get() {
-    return store.getters["getSolanaInstance"];
-  },
+    get() {
+        return store.getters["getSolanaInstance"];
+    },
 });
 
 const getSolanaWalletInstance = computed({
-  get() {
-    return store.getters["getSolanaWalletInstance"];
-  },
+    get() {
+        return store.getters["getSolanaWalletInstance"];
+    },
 });
 console.log(nftObj, "nftObj");
 
 const NFTComputedData = computed({
-  get() {
-    if (getAllNFTs.value && getAllNFTs.value.length) {
-      console.log(router, "get router");
-      return getAllNFTs.value.find((item) => item.mint === router.currentRoute.value.params.id);
-    }
-    console.log(getAllNFTs.value, "get all nFTS");
-    return null;
-  },
+    get() {
+        if (getAllNFTs.value && getAllNFTs.value.length) {
+            console.log(router, "get router");
+            return getAllNFTs.value.find((item) => item.mint === router.currentRoute.value.params.id);
+        }
+        console.log(getAllNFTs.value, "get all nFTS");
+        return null;
+    },
 });
 
 const burnNFTHandler = async () => {
-  console.log(actions, "burnNFTHandler");
+    console.log(actions, "burnNFTHandler");
 
-  try {
-    const connection = getSolanaInstance.value;
-    let mint = new PublicKey(NFTComputedData.value.mint);
-    const fromWallet = getSolanaWalletInstance.value;
-    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      fromWallet,
-      mint,
-      fromWallet.publicKey
-    );
-    console.log(fromTokenAccount.address.toString(), "fromTokenAccount");
+    try {
+        const connection = getSolanaInstance.value;
+        let mint = new PublicKey(NFTComputedData.value.mint);
+        const fromWallet = getSolanaWalletInstance.value;
+        const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
+            connection,
+            fromWallet,
+            mint,
+            fromWallet.publicKey
+        );
+        console.log(fromTokenAccount.address.toString(), "fromTokenAccount");
 
-    store.dispatch("setStatus", StatusType.Approving);
-    const signature = await actions.burnToken({
-      connection: connection,
-      wallet: fromWallet,
-      token: fromTokenAccount.address,
-      mint: mint,
-      amount: 1,
-      owner: fromWallet.publicKey,
-    });
-    console.log(signature, "signature");
-    store.dispatch("setStatus", StatusType.Sending);
-    const response = await connection.confirmTransaction(signature.txId, "processed");
-    console.log(response, "response");
-    if (response.value && response.value.err === null) {
-      store.dispatch("setStatus", StatusType.ChoosingParameters);
-      store.dispatch("setAllSolanaNFts");
-      router.push({ name: "ChooseNFT"});
-      notify({
-        title: "Transaction status",
-        type: "success",
-        text: "NFT successfully burned!",
-        duration: 6000,
-      });
+        store.dispatch("setStatus", StatusType.Approving);
+        const signature = await actions.burnToken({
+            connection: connection,
+            wallet: fromWallet,
+            token: fromTokenAccount.address,
+            mint: mint,
+            amount: 1,
+            owner: fromWallet.publicKey,
+        });
+        console.log(signature, "signature");
+        store.dispatch("setStatus", StatusType.Sending);
+        const response = await connection.confirmTransaction(signature.txId, "processed");
+        console.log(response, "response");
+        if (response.value && response.value.err === null) {
+            store.dispatch("setStatus", StatusType.ChoosingParameters);
+            store.dispatch("setAllSolanaNFts");
+            router.push({ name: "ChooseNFT"});
+            notify({
+                title: "Transaction status",
+                type: "success",
+                text: "NFT successfully burned!",
+                duration: 6000,
+            });
+        }
+    } catch(err) {
+        console.log(err, "ERRROR burnNFTHandler");
+        store.dispatch("setStatus", StatusType.ChoosingParameters);
+        notify({
+            title: "Transaction status",
+            type: "error",
+            text: `Something wrong, Error: ${err}`,
+            duration: 6000,
+        });
     }
-  } catch(err) {
-    console.log(err, "ERRROR burnNFTHandler");
-    store.dispatch("setStatus", StatusType.ChoosingParameters);
-    notify({
-      title: "Transaction status",
-      type: "error",
-      text: `Something wrong, Error: ${err}`,
-      duration: 6000,
-    });
-  }
 };
 
 const approveNFTHandler = () => {
-  console.log("approveNFTHandler");
+    console.log("approveNFTHandler");
 };
 
 const unbundleNFT = () => {
-  console.log("unbundleNFT");
+    console.log("unbundleNFT");
 };
 
 const changeFormat = () => {
-  console.log("changeFormat");
+    console.log("changeFormat");
 };
 
 const getStatusText = (status) => {
-  const statusData = statusMixin(status);
-  console.log(statusData, "statusData");
+    const statusData = statusMixin(status);
+    console.log(statusData, "statusData");
 
-  return statusData.statusText;
+    return statusData.statusText;
 };
 </script>
 

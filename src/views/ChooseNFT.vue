@@ -39,61 +39,61 @@ const store = useStore();
 let token_id =  ref([]);
 
 const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
+    get() {
+        return store.getters["getAllNFTs"];
+    },
 });
 
 const getLoadingNFTsStatus = computed({
-  get() {
-    return store.getters["getLoadingNFTsStatus"];
-  },
+    get() {
+        return store.getters["getLoadingNFTsStatus"];
+    },
 });
 
 
 const cardClass = computed({
-  get() {
-    return(idx) => token_id.value.indexOf(idx) !== -1;
-  },
+    get() {
+        return(idx) => token_id.value.indexOf(idx) !== -1;
+    },
 });
 
 console.log(token_id.value.length, "token_id.value.length");
 
 const getNav = computed({
-  get() {
-    return [
-      {
-        text: "Create New",
-        name: "CreateNFT",
-        params: null,
-      },
-      {
-        text: "Send",
-        name: "SendNFT",
-        params: {
-          id: token_id.value && token_id.value.length === 1 ? token_id.value[0] : ""
-        },
-      },
-    ];
-  },
+    get() {
+        return [
+            {
+                text: "Create New",
+                name: "CreateNFT",
+                params: null,
+            },
+            {
+                text: "Send",
+                name: "SendNFT",
+                params: {
+                    id: token_id.value && token_id.value.length === 1 ? token_id.value[0] : ""
+                },
+            },
+        ];
+    },
 });
 
 const chooseNFT = (item) => {
-  const index = token_id.value.findIndex((_) => _ === item.mint);
+    const index = token_id.value.findIndex((_) => _ === item.mint);
 
-  // Currently approving multiple NFTs is problem,
-  // for this need smart contract, bundle approve + bundle sending
-  if (index > -1) {
-    token_id.value.splice(index, 1);
-  } else {
-    token_id.value.push(item.mint);
-  }
+    // Currently approving multiple NFTs is problem,
+    // for this need smart contract, bundle approve + bundle sending
+    if (index > -1) {
+        token_id.value.splice(index, 1);
+    } else {
+        token_id.value.push(item.mint);
+    }
 
-  // this one for single actions, send or effects page
-  token_id.value && token_id.value.length === 1 ? store.dispatch("setCurrentNFTdata", item) : store.dispatch("setCurrentNFTdata", {});
+    // this one for single actions, send or effects page
+    token_id.value && token_id.value.length === 1 ? store.dispatch("setCurrentNFTdata", item) : store.dispatch("setCurrentNFTdata", {});
 
-  // this one for bundle page
-  // this.passChosenTokens(this.nftObj.token_id);
+    // this one for bundle page
+    // this.passChosenTokens(this.nftObj.token_id);
 };
 </script>
 

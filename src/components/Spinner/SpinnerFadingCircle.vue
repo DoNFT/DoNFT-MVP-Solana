@@ -6,20 +6,20 @@
 
 <script>
 export default {
-  name: "spinner-fading-circle",
-  inheritAttrs: false,
-  props: {
-    size: {
-      type: Number,
-      default: 48,
+    name: "spinner-fading-circle",
+    inheritAttrs: false,
+    props: {
+        size: {
+            type: Number,
+            default: 48,
+        },
     },
-  },
-  computed: {
-    style() {
-      const size = this.size && `${this.size}px`;
-      return { width: size, height: size };
+    computed: {
+        style() {
+            const size = this.size && `${this.size}px`;
+            return { width: size, height: size };
+        },
     },
-  },
 };
 </script>
 

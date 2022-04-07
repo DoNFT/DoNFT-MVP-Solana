@@ -30,11 +30,11 @@ const store = useStore();
 const router = useRouter();
 
 watch(() => connected.value, () => {
-  console.log(connected.value, "DISCONNECTED!");
-  if (connected.value === false) {
-    store.dispatch("setWalletDisconnected");
-    router.push({ name: "LoginView" });
-  }
+    console.log(connected.value, "DISCONNECTED!");
+    if (connected.value === false) {
+        store.dispatch("setWalletDisconnected");
+        router.push({ name: "LoginView" });
+    }
 });
 // export default {
 //   name: "HeadBar",

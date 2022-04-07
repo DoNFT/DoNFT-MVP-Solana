@@ -30,50 +30,50 @@ import { useStore } from "vuex";
 import { placeholder } from "@/utilities";
 
 const props = defineProps({
-  metadata: Object,
-  editAvailable: Boolean,
-  isBundle: Boolean,
-  getInfo: Boolean,
-  isApprovedContract: String,
+    metadata: Object,
+    editAvailable: Boolean,
+    isBundle: Boolean,
+    getInfo: Boolean,
+    isApprovedContract: String,
 });
 
 const store = useStore();
 let nftImage = ref(null);
 
 const getIpfs = computed({
-  get() {
-    return store.getters["getIpfs"];
-  },
+    get() {
+        return store.getters["getIpfs"];
+    },
 });
 
 watch(() => getIpfs.value, () => {
-  if (getIpfs.value) {
-    loadContent();
-  }
+    if (getIpfs.value) {
+        loadContent();
+    }
 });
 
 onMounted(() => {
-  if (getIpfs.value) {
-    loadContent();
-  }
+    if (getIpfs.value) {
+        loadContent();
+    }
 });
 
 const loadContent = async () => {
-  if (props.metadata) {
-    let tokenData = null;
+    if (props.metadata) {
+        let tokenData = null;
 
-    if (!nftImage.value || props.isBundle) {
-      // here is all data about NFT in METAPLEX Version
-      tokenData = await store.dispatch("setTokenImage", props.metadata.data);
+        if (!nftImage.value || props.isBundle) {
+            // here is all data about NFT in METAPLEX Version
+            tokenData = await store.dispatch("setTokenImage", props.metadata.data);
 
-      // if need extra info for single page, dispatch
-      if (props.getInfo) {
-        store.dispatch("setCurrentNFTdata", tokenData);
-      }
+            // if need extra info for single page, dispatch
+            if (props.getInfo) {
+                store.dispatch("setCurrentNFTdata", tokenData);
+            }
+        }
+
+        nftImage.value = tokenData ? tokenData.image : null;
     }
-
-    nftImage.value = tokenData ? tokenData.image : null;
-  }
 };
 </script>
 

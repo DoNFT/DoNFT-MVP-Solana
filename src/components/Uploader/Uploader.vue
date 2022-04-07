@@ -47,32 +47,32 @@ let imgSource = ref(null);
 const inputFile = ref(null);
 
 const props = defineProps({
-  withEffects: Boolean,
-  imageSrc: String,
+    withEffects: Boolean,
+    imageSrc: String,
 });
 
 const emitList = defineEmits(["selected"]);
 
 const onFileSelected = (event) => {
-  dragOver.value = false;
-  const img = event.target.files ? event.target.files[0] : null;
-  inputFile.value = null;
-  updateImage(img);
+    dragOver.value = false;
+    const img = event.target.files ? event.target.files[0] : null;
+    inputFile.value = null;
+    updateImage(img);
 
-  if (props.withEffects) {
-    store.dispatch("setEffectModal", true);
-  }
+    if (props.withEffects) {
+        store.dispatch("setEffectModal", true);
+    }
 };
 
 const updateImage = (img) => {
-  const reader = new FileReader();
+    const reader = new FileReader();
 
-  reader.onload = (event) => {
-    imgSource.value = event.target.result;
-    emitList("selected", imgSource.value);
-  };
-  console.log(imgSource, "this.imgSource");
-  reader.readAsDataURL(img);
+    reader.onload = (event) => {
+        imgSource.value = event.target.result;
+        emitList("selected", imgSource.value);
+    };
+    console.log(imgSource, "this.imgSource");
+    reader.readAsDataURL(img);
 };
 </script>
 

@@ -4,8 +4,8 @@ import Upload from "./UploadSvg.vue";
 import Pencil from "./PencilSvg.vue";
 
 export default {
-  Cross,
-  CheckCircle,
-  Upload,
-  Pencil,
+    Cross,
+    CheckCircle,
+    Upload,
+    Pencil,
 };

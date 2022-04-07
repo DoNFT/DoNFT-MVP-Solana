@@ -49,7 +49,7 @@
 
 <script setup>
 import {
-  actions,
+    actions,
 } from "@metaplex/js";
 import { reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
@@ -66,117 +66,117 @@ const router = useRouter();
 const { StatusType } = statusMixin();
 
 const nftObj = reactive({
-  name: "NFT token 2 title",
-  symbol: "",
-  seller_fee_basis_points: 0,
-  external_url: "",
-  description: "NFT token 2 description",
-  image: "",
-  properties: {
-    files: [
-      {
-        uri: "",
-        type: "image/jpeg"
-      }
-    ],
-    category: "image",
-    creators: [
-      {
-        "address": "8BZZo3mv9xjdrhpJgBAYQDYmsAkgJdW3riaJPJTL4gYz",
-        "share": 100
-      }
-    ]
-  },
-  collection: null,
-  use: null
+    name: "NFT token 2 title",
+    symbol: "",
+    seller_fee_basis_points: 0,
+    external_url: "",
+    description: "NFT token 2 description",
+    image: "",
+    properties: {
+        files: [
+            {
+                uri: "",
+                type: "image/jpeg"
+            }
+        ],
+        category: "image",
+        creators: [
+            {
+                "address": "8BZZo3mv9xjdrhpJgBAYQDYmsAkgJdW3riaJPJTL4gYz",
+                "share": 100
+            }
+        ]
+    },
+    collection: null,
+    use: null
 });
 
 const getNavigation = [{
-  text: "Back to Gallery",
-  name: "ChooseNFT",
+    text: "Back to Gallery",
+    name: "ChooseNFT",
 }];
 
 const getSolanaWalletInstance = computed({
-  get() {
-    return store.getters["getSolanaWalletInstance"];
-  },
+    get() {
+        return store.getters["getSolanaWalletInstance"];
+    },
 });
 
 const getStatus = computed({
-  get() {
-    return store.getters["getStatus"];
-  },
+    get() {
+        return store.getters["getStatus"];
+    },
 });
 
 const getSolanaInstance = computed({
-  get() {
-    return store.getters["getSolanaInstance"];
-  },
+    get() {
+        return store.getters["getSolanaInstance"];
+    },
 });
 
 const getNFTdeployResult = computed({
-  get() {
-    return store.getters["getNFTdeployResult"];
-  },
+    get() {
+        return store.getters["getNFTdeployResult"];
+    },
 });
 
 onMounted(() => {
-  console.log(actions, "actions");
+    console.log(actions, "actions");
 });
 
 const setUploadedImg = (img) => {
-  nftObj.image = img; 
+    nftObj.image = img; 
 };
 
 const createNewNFT = async () => {
-  console.log(nftObj, "NFT OBJ");
-  try {
-    const connection = getSolanaInstance.value;
+    console.log(nftObj, "NFT OBJ");
+    try {
+        const connection = getSolanaInstance.value;
 
-    store.dispatch("setStatus", StatusType.DeployingToIPFS);
-    await store.dispatch("setDeployToIPFS", nftObj);
+        store.dispatch("setStatus", StatusType.DeployingToIPFS);
+        await store.dispatch("setDeployToIPFS", nftObj);
 
-    store.dispatch("setStatus", StatusType.Approving);
-    console.log(getNFTdeployResult, "CREATING");
-    const signature = await actions.mintNFT({
-      connection,
-      wallet: getSolanaWalletInstance.value,
-      uri: getNFTdeployResult.value,
-      maxSupply: 1
-    });
-    console.log("signature 1", signature);
-    store.dispatch("setStatus", StatusType.Minting);
-    const response = await connection.confirmTransaction(signature.txId, "processed");
-    console.log("response signature 2", response);
+        store.dispatch("setStatus", StatusType.Approving);
+        console.log(getNFTdeployResult, "CREATING");
+        const signature = await actions.mintNFT({
+            connection,
+            wallet: getSolanaWalletInstance.value,
+            uri: getNFTdeployResult.value,
+            maxSupply: 1
+        });
+        console.log("signature 1", signature);
+        store.dispatch("setStatus", StatusType.Minting);
+        const response = await connection.confirmTransaction(signature.txId, "processed");
+        console.log("response signature 2", response);
 
-    if (response.value && response.value.err === null) {
-      store.dispatch("setStatus", StatusType.ChoosingParameters);
-      store.dispatch("setAllSolanaNFts");
-      router.push({ name: "ChooseNFT"});
-      notify({
-        title: "Transaction status",
-        type: "success",
-        text: "NFT successfully Minted!",
-        duration: 6000,
-      });
+        if (response.value && response.value.err === null) {
+            store.dispatch("setStatus", StatusType.ChoosingParameters);
+            store.dispatch("setAllSolanaNFts");
+            router.push({ name: "ChooseNFT"});
+            notify({
+                title: "Transaction status",
+                type: "success",
+                text: "NFT successfully Minted!",
+                duration: 6000,
+            });
+        }
+
+    } catch(err) {
+        console.log(err, "ERRROR createNewNFT");
+        store.dispatch("setStatus", StatusType.ChoosingParameters);
+        notify({
+            title: "Transaction status",
+            type: "error",
+            text: `Something wrong, Error: ${err}`,
+            duration: 6000,
+        });
     }
-
-  } catch(err) {
-    console.log(err, "ERRROR createNewNFT");
-    store.dispatch("setStatus", StatusType.ChoosingParameters);
-    notify({
-      title: "Transaction status",
-      type: "error",
-      text: `Something wrong, Error: ${err}`,
-      duration: 6000,
-    });
-  }
 };
 
 const getStatusText = (status) => {
-  const statusData = statusMixin(status);
-  console.log(statusData, "statusData");
+    const statusData = statusMixin(status);
+    console.log(statusData, "statusData");
 
-  return statusData.statusText;
+    return statusData.statusText;
 };
 </script>

@@ -35,55 +35,55 @@ const router = useRouter();
 const route = router.currentRoute;
 
 const getWalletError = computed({
-  get() {
-    return store.getters["getWalletError"];
-  },
+    get() {
+        return store.getters["getWalletError"];
+    },
 });
 
 const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
+    get() {
+        return store.getters["getAllNFTs"];
+    },
 });
 
 onMounted(async () => {
-  await store.dispatch("setIpfs");
+    await store.dispatch("setIpfs");
 });
 
 // there are 2 cases of errors in Solana,
 // 1 - user reject wallet popup on Approve, Send, Burn... no need to redirect
 // 2 - user wallet auto disconnected and phantom ask to login, and if user reject, we need to redirect to loginview
 watch(() => getWalletError.value, () => {
-  console.log(getWalletError.value, connected.value, "watch getWalletError");
-  if (getWalletError.value === true && connected.value === false) {
-    router.push({ name: "LoginView" });
-    store.dispatch("setWalletError", false);
-  }
+    console.log(getWalletError.value, connected.value, "watch getWalletError");
+    if (getWalletError.value === true && connected.value === false) {
+        router.push({ name: "LoginView" });
+        store.dispatch("setWalletError", false);
+    }
 });
 
 watch(() => connected.value, () => {
-  console.log(connected.value, "CONNECTED! vue");
-  console.log(connecting.value, "connecting vue!");
-  console.log(route.value, "route vue!");
-  if (connected.value === false) {
-    store.dispatch("setWalletDisconnected");
-    router.push({ name: "LoginView" });
-  }
+    console.log(connected.value, "CONNECTED! vue");
+    console.log(connecting.value, "connecting vue!");
+    console.log(route.value, "route vue!");
+    if (connected.value === false) {
+        store.dispatch("setWalletDisconnected");
+        router.push({ name: "LoginView" });
+    }
 
-  // todo: add CHECKING with TOTAL NFT value
+    // todo: add CHECKING with TOTAL NFT value
 
-  // getting list of NFTs
-  // cause connected unavailable in MOUNTED hook
-  if (connected.value === true && getAllNFTs.value && getAllNFTs.value.length === 0) {
-    store.dispatch("setSolanaInstance", connection);
-    store.dispatch("setSolanaWalletInstance", wallet.value);
-    store.dispatch("setAllSolanaNFts");
-  }
+    // getting list of NFTs
+    // cause connected unavailable in MOUNTED hook
+    if (connected.value === true && getAllNFTs.value && getAllNFTs.value.length === 0) {
+        store.dispatch("setSolanaInstance", connection);
+        store.dispatch("setSolanaWalletInstance", wallet.value);
+        store.dispatch("setAllSolanaNFts");
+    }
 
-  if (route.value.name === "LoginView" && (connecting.value || connected.value)) {
-    store.dispatch("setConnected", publicKey.toString());
-    router.push({ name: "ChooseNFT" });
-  }
+    if (route.value.name === "LoginView" && (connecting.value || connected.value)) {
+        store.dispatch("setConnected", publicKey.toString());
+        router.push({ name: "ChooseNFT" });
+    }
 });
 </script>
 

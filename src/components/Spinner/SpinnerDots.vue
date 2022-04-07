@@ -7,28 +7,28 @@
 
 <script>
 export default {
-  name: "spinner-dots",
-  inheritAttrs: true,
-  props: {
-    size: {
-      type: Number,
-      default: 48,
+    name: "spinner-dots",
+    inheritAttrs: true,
+    props: {
+        size: {
+            type: Number,
+            default: 48,
+        },
+        color: {
+            type: String,
+        },
     },
-    color: {
-      type: String,
+    computed: {
+        containerStyle() {
+            console.log(this.size, "containerStyle");
+            const size = this.size && `${this.size}px`;
+            return { width: size, height: size };
+        },
+        blobStyle() {
+            const size = this.size && `${this.size / 3}px`;
+            return { color: this.color, width: size, height: size };
+        },
     },
-  },
-  computed: {
-    containerStyle() {
-      console.log(this.size, "containerStyle");
-      const size = this.size && `${this.size}px`;
-      return { width: size, height: size };
-    },
-    blobStyle() {
-      const size = this.size && `${this.size / 3}px`;
-      return { color: this.color, width: size, height: size };
-    },
-  },
 };
 </script>
 

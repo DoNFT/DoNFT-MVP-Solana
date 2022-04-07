@@ -24,15 +24,15 @@ import { defineProps } from "vue";
 import { useRouter } from "vue-router";
 
 defineProps({
-  navigation: {
-    type: Array,
-    default: () => [],
-  },
+    navigation: {
+        type: Array,
+        default: () => [],
+    },
 });
 const router = useRouter();
 
 const nadleRedirect = (item) => {
-  router.push({ name: item.name, params: item.params ? item.params : {} });
+    router.push({ name: item.name, params: item.params ? item.params : {} });
 };
 </script>
 
