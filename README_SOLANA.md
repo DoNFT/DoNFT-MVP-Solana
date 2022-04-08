@@ -44,3 +44,9 @@ https://app.buildspace.so/projects/CO77556be5-25e9-49dd-a799-91a2fc29520e/lesson
 
 NFT Lootbox on Solana, here is result of this tutorial:
 https://solana-nft-lootbox.vercel.app/
+
+### Deep explanation of main Metaplex contracts
+https://medium.com/metaplex/metaplex-architecture-b94a64c37130
+
+### Solana Transactions in depth
+https://medium.com/@asmiller1989/solana-transactions-in-depth-1f7f7fe06ac2
