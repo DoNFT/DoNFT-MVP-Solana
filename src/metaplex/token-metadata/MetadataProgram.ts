@@ -1,14 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { Program, config } from '../core/mpl-core';
-
-export enum MetadataKey {
-  Uninitialized = 0,
-  MetadataV1 = 4,
-  EditionV1 = 1,
-  MasterEditionV1 = 2,
-  MasterEditionV2 = 6,
-  EditionMarker = 7,
-}
+import { Program, config } from '@metaplex-foundation/mpl-core';
 
 export class MetadataProgram extends Program {
   static readonly PREFIX = 'metadata';

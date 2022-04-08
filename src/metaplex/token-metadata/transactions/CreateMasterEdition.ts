@@ -1,4 +1,4 @@
-import { Borsh, Transaction } from '../../core/mpl-core';
+import { Borsh, Transaction } from '@metaplex-foundation/mpl-core';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   PublicKey,
@@ -20,7 +20,7 @@ export class CreateMasterEditionArgs extends Borsh.Data<{ maxSupply: BN | null }
   maxSupply: BN | null;
 }
 
-type CreateMasterEditionParams = {
+export type CreateMasterEditionParams = {
   edition: PublicKey;
   metadata: PublicKey;
   updateAuthority: PublicKey;
@@ -31,8 +31,6 @@ type CreateMasterEditionParams = {
 
 export class CreateMasterEdition extends Transaction {
   constructor(options: TransactionCtorFields, params: CreateMasterEditionParams) {
-    console.log(options, 'options CreateMasterEdition')
-    console.log(params, 'params CreateMasterEdition')
     super(options);
     const { feePayer } = options;
     const { edition, metadata, updateAuthority, mint, mintAuthority, maxSupply } = params;

@@ -16,38 +16,29 @@ import { getCancelBidTransactions } from './cancelBid';
 import { CreateTokenAccount } from '../transactions';
 import { createApproveTxs, createWrappedAccountTxs } from './shared';
 
-/**
- * Parameters for {@link placeBid}
- */
-export interface PlaceBidParams {
+interface IPlaceBidParams {
   connection: Connection;
-  /** The wallet from which tokens will be taken and transferred to the {@link bidderPotToken} account **/
   wallet: Wallet;
-  /** The {@link Auction} program account address for the bid **/
   auction: PublicKey;
-  /** Associated token account for the bidder pot **/
   bidderPotToken?: PublicKey;
-  /** Amount of tokens (accounting for decimals) or lamports to bid. One important nuance to remember is that each token mint has a different amount of decimals, which need to be accounted while specifying the amount. For instance, to send 1 token with a 0 decimal mint you would provide `1` as the amount, but for a token mint with 6 decimals you would provide `1000000` as the amount to transfer one whole token **/
+  // amount in lamports
   amount: BN;
   commitment?: Commitment;
 }
 
-export interface PlaceBidResponse {
+interface IPlaceBidResponse {
   txId: TransactionSignature;
   bidderPotToken: PublicKey;
   bidderMeta: PublicKey;
 }
 
-/**
- * Place a bid by taking it from the provided wallet and placing it in the bidder pot account.
- */
 export const placeBid = async ({
   connection,
   wallet,
   amount,
   auction,
   bidderPotToken,
-}: PlaceBidParams): Promise<PlaceBidResponse> => {
+}: IPlaceBidParams): Promise<IPlaceBidResponse> => {
   // get data for transactions
   const bidder = wallet.publicKey;
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);

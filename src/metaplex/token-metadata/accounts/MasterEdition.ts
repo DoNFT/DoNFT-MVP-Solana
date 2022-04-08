@@ -5,13 +5,14 @@ import {
   ERROR_INVALID_OWNER,
   AnyPublicKey,
   StringPublicKey,
-} from '../../core/mpl-core';
+} from '@metaplex-foundation/mpl-core';
 import BN from 'bn.js';
 import bs58 from 'bs58';
 import { Edition } from './Edition';
-import { MetadataKey, MetadataProgram } from '../MetadataProgram';
+import { MetadataProgram } from '../MetadataProgram';
 import { Buffer } from 'buffer';
 import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
+import { MetadataKey } from './constants';
 
 type ArgsV1 = {
   key: MetadataKey;

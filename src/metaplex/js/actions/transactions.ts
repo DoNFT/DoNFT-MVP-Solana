@@ -1,10 +1,9 @@
 import { Keypair, SendOptions } from '@solana/web3.js';
 import { Wallet } from '../wallet';
 import { Connection } from '../Connection';
-import { Transaction } from '@metaplex-foundation/mpl-core';
+import { Transaction } from '../../token-metadata/core/dist/src/mpl-core';
 
-/** Parameters for {@link sendTransaction} **/
-export interface SendTransactionParams {
+interface ISendTransactionParams {
   connection: Connection;
   wallet: Wallet;
   txs: Transaction[];
@@ -12,17 +11,13 @@ export interface SendTransactionParams {
   options?: SendOptions;
 }
 
-/**
- * Sign and send transactions for validation
- * @return This action returns the resulting transaction id once it has been executed
- */
 export const sendTransaction = async ({
   connection,
   wallet,
   txs,
   signers = [],
   options,
-}: SendTransactionParams): Promise<string> => {
+}: ISendTransactionParams): Promise<string> => {
   let tx = Transaction.fromCombined(txs, { feePayer: wallet.publicKey });
   tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
 

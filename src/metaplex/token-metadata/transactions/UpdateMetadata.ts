@@ -1,4 +1,4 @@
-import { Borsh, Transaction } from '../../core/mpl-core';
+import { Borsh, Transaction } from '@metaplex-foundation/mpl-core';
 import { PublicKey, TransactionCtorFields, TransactionInstruction } from '@solana/web3.js';
 import { MetadataDataData } from '../accounts/Metadata';
 import { MetadataProgram } from '../MetadataProgram';

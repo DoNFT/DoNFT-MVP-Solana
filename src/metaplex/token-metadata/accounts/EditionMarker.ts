@@ -4,12 +4,13 @@ import {
   ERROR_INVALID_ACCOUNT_DATA,
   ERROR_INVALID_OWNER,
   AnyPublicKey,
-} from '../../core/mpl-core';
+} from '@metaplex-foundation/mpl-core';
 import { AccountInfo, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { Edition } from './Edition';
-import { MetadataKey, MetadataProgram } from '../MetadataProgram';
+import { MetadataProgram } from '../MetadataProgram';
 import { Buffer } from 'buffer';
+import { MetadataKey } from './constants';
 
 type Args = { key: MetadataKey; ledger: number[] };
 export class EditionMarkerData extends Borsh.Data<Args> {

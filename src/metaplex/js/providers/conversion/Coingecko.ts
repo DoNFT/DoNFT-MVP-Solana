@@ -1,15 +1,8 @@
 import { ConversionRateProvider, Currency, ConversionRatePair } from './ConversionRateProvider';
 import axios from 'axios';
 
-/**
- * Provides currency rate converstion via CoinGecko API.
- */
 export class Coingecko implements ConversionRateProvider {
-  /**
-   * Translates currency strings from the internal Currency enum to the format that Coingecko requires
-   * @param currency
-   * @returns The provided currency in a format that Coingecko API recognizes. For instance, {@link Currency.AR} becomes 'arweave'
-   */
+  // this method translates currency strings to the format that coingecko requires
   static translateCurrency(currency: Currency): string {
     switch (currency) {
       case Currency.AR:
@@ -25,11 +18,6 @@ export class Coingecko implements ConversionRateProvider {
     }
   }
 
-  /**
-   * Provides conversion rates for each `from` currency into all the provided `to` currencies
-   * @param from
-   * @param to
-   */
   async getRate(from: Currency | Currency[], to: Currency | Currency[]) {
     const fromArray = typeof from === 'string' ? [from] : from;
     const toArray = typeof to === 'string' ? [to] : to;

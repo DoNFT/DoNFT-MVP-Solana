@@ -8,20 +8,16 @@ import {
   MasterEdition,
   Metadata,
   MetadataDataData,
-} from '../../token-metadata/mpl-token-metadata';
+} from '../../token-metadata/dist/mpl-token-metadata';
 import { Wallet } from '../wallet';
 import { sendTransaction } from './transactions';
 import { lookup } from '../utils/metadata';
 import { prepareTokenAccountAndMintTxs } from './shared';
 
-/** Parameters for {@link mintNFT} **/
 export interface MintNFTParams {
   connection: Connection;
-  /** Wallet of the NFT creator and fee payer for the minting action **/
   wallet: Wallet;
-  /** URI for a json file compatible with the {@link MetadataJson} format. Note that the `properties` field has to contain at least one creator and one of the provided creators must have the same public key as the provided {@link wallet} **/
   uri: string;
-  /** Maximum supply of limited edition prints that can be created from the master edition of the minted NFT **/
   maxSupply?: number;
 }
 
@@ -32,6 +28,7 @@ export interface MintNFTResponse {
   edition: PublicKey;
 }
 
+    
 export const mintNFT = async ({
   connection,
   wallet,
@@ -109,6 +106,7 @@ export const mintNFT = async ({
       maxSupply: maxSupply || maxSupply === 0 ? new BN(maxSupply) : null,
     },
   );
+  console.log(masterEditionTx, 'masterEditionTx')
 
   const txId = await sendTransaction({
     connection,

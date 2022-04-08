@@ -18,14 +18,14 @@ import {
   UpdatePrimarySaleHappenedViaToken,
 } from '../../token-metadata/mpl-token-metadata';
 
-export interface RedeemFullRightsTransferBidParams {
+interface IRedeemBidParams {
   connection: Connection;
   wallet: Wallet;
   auction: PublicKey;
   store: PublicKey;
 }
 
-export interface RedeemFullRightsTransferBidResponse {
+interface IRedeemBidResponse {
   txId: string;
 }
 
@@ -34,7 +34,7 @@ export const redeemFullRightsTransferBid = async ({
   wallet,
   store,
   auction,
-}: RedeemFullRightsTransferBidParams): Promise<RedeemFullRightsTransferBidResponse> => {
+}: IRedeemBidParams): Promise<IRedeemBidResponse> => {
   // get data for transactions
   const bidder = wallet.publicKey;
   const accountRentExempt = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
@@ -86,7 +86,7 @@ export const redeemFullRightsTransferBid = async ({
   return { txId };
 };
 
-interface RedeemFRTBidTransactionsParams {
+interface IRedeemBidTransactionsParams {
   bidder: PublicKey;
   accountRentExempt: number;
   bidderPotToken?: PublicKey;
@@ -123,7 +123,7 @@ export const getRedeemFRTBidTransactions = async ({
   safetyDepositConfig,
   transferAuthority,
   metadata,
-}: RedeemFRTBidTransactionsParams) => {
+}: IRedeemBidTransactionsParams) => {
   const txBatch = new TransactionsBatch({ transactions: [] });
 
   // create a new account for redeeming
