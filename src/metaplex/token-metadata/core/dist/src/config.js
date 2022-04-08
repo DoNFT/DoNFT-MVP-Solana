@@ -5,9 +5,9 @@ exports.config = {
     arweaveWallet: 'HvwC9QSAzvGXhhVrgPmauVwFWcYZhne3hVot9EbHuFTm',
     programs: {
         auction: 'auctxRXPeJoc4817jDhf4HbjnhEcr1cCXenosMhK5R8',
-        metadata: '39sW6jtZiaiBL4usraz1CU6WfN4ciZRoQ6MKZJbtwLuw',
-        metaplex: '58kqoffmdBuj76t5TWqgeLZpVeqeRrz7yKptFWYpzpW8',
-        vault: '9LDTdGgKjvkTsxTjBLrHZuas1FcHsfCL6rijRgvceHt6',
+        metadata: 'CUYiG7yRSyKrmQpXsRziu4jcV9mG1ttPnz4cDqGubM6k',
+        metaplex: 'p1exdMJcjVao65QdewkaZRUnU6VPSXhus9n2GzWfh98',
+        vault: 'vau1zxA2LbssAUEF7Gpw91zMM1LvXrvpzJtmZ58rPsn',
         packs: 'BNRmGgciUJuyznkYHnmitA9an1BcDDiU9JmjEQwvBYVR',
         auctionHouse: 'hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk',
         memo: 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',

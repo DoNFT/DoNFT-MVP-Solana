@@ -18,6 +18,8 @@ CreateMasterEditionArgs.SCHEMA = CreateMasterEditionArgs.struct([
 ]);
 class CreateMasterEdition extends mpl_core_1.Transaction {
     constructor(options, params) {
+        console.log(options, 'options CreateMasterEdition');
+        console.log(params, 'params CreateMasterEdition');
         super(options);
         const { feePayer } = options;
         const { edition, metadata, updateAuthority, mint, mintAuthority, maxSupply } = params;

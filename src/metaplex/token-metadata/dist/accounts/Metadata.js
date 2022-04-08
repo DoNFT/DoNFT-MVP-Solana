@@ -51,6 +51,7 @@ DataV2.SCHEMA = new Map([
 ]);
 class MetadataDataData extends mpl_core_1.Borsh.Data {
     constructor(args) {
+        console.log(args, 'ARGS MetadataDataData');
         super(args);
         const METADATA_REPLACE = new RegExp('\u0000', 'g');
         this.name = args.name.replace(METADATA_REPLACE, '');

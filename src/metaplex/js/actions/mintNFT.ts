@@ -122,6 +122,8 @@ export const mintNFT = async ({
   });
 
   console.log(txId, 'tx ID')
+  console.log(metadataPDA.toString(), 'metadataPDA.toString()')
+  console.log(mint.publicKey.toString(), 'mint.publicKey.toString()')
 
   return {
     txId,
