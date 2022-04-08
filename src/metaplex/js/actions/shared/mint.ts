@@ -6,7 +6,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { CreateAssociatedTokenAccount, CreateMint, MintTo } from '../../transactions';
-import { Transaction }from '../../../token-metadata/core/dist/src/mpl-core';
+import { Transaction } from '../../../core/mpl-core';
 
 interface MintTxs {
   mint: Keypair;

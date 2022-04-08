@@ -4,7 +4,7 @@ import {
   ERROR_INVALID_ACCOUNT_DATA,
   ERROR_INVALID_OWNER,
   AnyPublicKey,
-} from '@metaplex-foundation/mpl-core';
+} from '../../core/mpl-core';
 import { AccountInfo, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 import { Edition } from './Edition';

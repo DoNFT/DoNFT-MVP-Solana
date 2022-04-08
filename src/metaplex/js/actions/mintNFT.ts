@@ -8,7 +8,7 @@ import {
   MasterEdition,
   Metadata,
   MetadataDataData,
-} from '../../token-metadata/dist/mpl-token-metadata';
+} from '../../token-metadata/mpl-token-metadata';
 import { Wallet } from '../wallet';
 import { sendTransaction } from './transactions';
 import { lookup } from '../utils/metadata';

@@ -1,4 +1,4 @@
-import { Borsh, Transaction } from '@metaplex-foundation/mpl-core';
+import { Borsh, Transaction } from '../../core/mpl-core';
 import {
   PublicKey,
   SystemProgram,

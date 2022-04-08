@@ -1,4 +1,4 @@
-import { Transaction } from '../../token-metadata/core/dist/src/mpl-core';
+import { Transaction } from '../../core/mpl-core';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import {
   PublicKey,

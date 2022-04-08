@@ -1,4 +1,4 @@
-import { StringPublicKey } from '@metaplex-foundation/mpl-core';
+import { StringPublicKey } from '../core/mpl-core';
 
 export type MetaDataJsonCategory = 'image' | 'video' | 'audio' | 'vr' | 'html';
 

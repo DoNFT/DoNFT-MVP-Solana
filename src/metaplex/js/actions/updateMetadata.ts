@@ -4,7 +4,7 @@ import {
   Metadata,
   MetadataDataData,
   UpdateMetadata,
-} from '../../token-metadata/dist/mpl-token-metadata';
+} from '../../token-metadata/mpl-token-metadata';
 import { sendTransaction } from './transactions';
 
 interface UpdateMetadataParams {

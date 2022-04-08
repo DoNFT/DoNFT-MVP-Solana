@@ -1,4 +1,4 @@
-import { Borsh, StringPublicKey } from '@metaplex-foundation/mpl-core';
+import { Borsh, StringPublicKey } from '../../core/mpl-core';
 
 type Args = { key: StringPublicKey; verified: boolean };
 export class Collection extends Borsh.Data<Args> {

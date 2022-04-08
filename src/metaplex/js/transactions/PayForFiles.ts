@@ -1,11 +1,11 @@
-import { Transaction } from '../../token-metadata/core/dist/src/mpl-core';
+import { Transaction } from '../../core/mpl-core';
 import {
   PublicKey,
   SystemProgram,
   TransactionCtorFields,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { config } from '../../token-metadata/core/dist/src/mpl-core';
+import { config } from '../../core/mpl-core';
 import { Buffer } from 'buffer';
 
 type PayForFilesParams = {
