@@ -131,6 +131,9 @@ const createNewNFT = async () => {
 
     const mx = Metaplex.make(connection);
 
+    // currently no ACTIONS FOLDERS in metaplex-next, creating do not work
+
+
     store.dispatch("setStatus", StatusType.DeployingToIPFS);
     // mx.use(walletOrGuestIdentity(getSolanaWalletInstance.value));
     const { nft } = await mx.nfts().createNft({
