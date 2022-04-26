@@ -30,6 +30,9 @@ export default createStore({
     setIpfs (state, ipfsInstance) {
       state.ipfs = ipfsInstance;
     },
+    SET_BUNDLE_NFTS (state, payload) {
+      sessionStorage.setItem("tokens_id", payload);
+    },
     SET_LOADING_NFTS (state, payload) {
       state.loadingNFTs = payload;
     },

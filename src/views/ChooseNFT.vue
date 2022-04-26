@@ -74,6 +74,13 @@ const getNav = computed({
           id: token_id.value && token_id.value.length === 1 ? token_id.value[0] : ""
         },
       },
+      {
+        text: "Bundle",
+        name: "BundleNFT",
+        params: {
+          id: token_id.value && token_id.value.length > 1 ? token_id.value : null
+        },
+      },
     ];
   },
 });
@@ -93,7 +100,7 @@ const chooseNFT = (item) => {
   token_id.value && token_id.value.length === 1 ? store.dispatch("setCurrentNFTdata", item) : store.dispatch("setCurrentNFTdata", {});
 
   // this one for bundle page
-  // this.passChosenTokens(this.nftObj.token_id);
+  store.commit("SET_BUNDLE_NFTS", token_id.value);
 };
 </script>
 

@@ -12,6 +12,7 @@ import CreateNFT from "@/views/CreateNFT";
 import SendNFT from "@/views/SendNFT";
 import ChooseNFT from "@/views/ChooseNFT";
 import NFTDetails from "@/views/NFTDetails";
+import BundleNFT from "@/views/BundleNFT";
 
 const { StatusType } = statusMixin();
 
@@ -49,6 +50,12 @@ const routes = [
     path: "/nft_details/:id",
     name: "NFTDetails",
     component: NFTDetails,
+    meta: { title: "Do[NFT]", requiresAuth: true }
+  },
+  {
+    path: "/bundle_nft",
+    name: "BundleNFT",
+    component: BundleNFT,
     meta: { title: "Do[NFT]", requiresAuth: true }
   },
 ];
