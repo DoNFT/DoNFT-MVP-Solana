@@ -13,6 +13,8 @@ module.exports = defineConfig({
         util: require.resolve("util"),
         stream: require.resolve("stream-browserify"),
         crypto: require.resolve("crypto-browserify"),
+        https: require.resolve("https-browserify"),
+        http: require.resolve("stream-http")
       }
     },
     module: {

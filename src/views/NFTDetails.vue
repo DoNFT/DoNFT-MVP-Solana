@@ -199,6 +199,8 @@ const burnNFTHandler = async () => {
       amount: 1,
       owner: fromWallet.publicKey,
     });
+
+
     console.log(signature, "signature");
     store.dispatch("setStatus", StatusType.Sending);
     const response = await connection.confirmTransaction(signature.txId, "processed");

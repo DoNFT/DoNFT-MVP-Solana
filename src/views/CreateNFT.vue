@@ -67,22 +67,22 @@ const { StatusType } = statusMixin();
 
 const nftObj = reactive({
   name: "NFT token 2 title",
-  symbol: "",
+  symbol: "test",
   seller_fee_basis_points: 0,
-  external_url: "",
   description: "NFT token 2 description",
   image: "",
+  isMutable: 0,
   properties: {
     files: [
       {
         uri: "",
-        type: "image/jpeg"
+        type: "image/*"
       }
     ],
     category: "image",
     creators: [
       {
-        "address": "8BZZo3mv9xjdrhpJgBAYQDYmsAkgJdW3riaJPJTL4gYz",
+        "address": "8T8zhN7AAR3UBfYhiBvKkzS39ii3AZMARZZz2KjA5UnV",
         "share": 100
       }
     ]
@@ -144,10 +144,13 @@ const createNewNFT = async () => {
       uri: getNFTdeployResult.value,
       maxSupply: 1
     });
+
+    console.log(signature.mint.toString(), "signature.mint");
     console.log("signature 1", signature);
     store.dispatch("setStatus", StatusType.Minting);
     const response = await connection.confirmTransaction(signature.txId, "processed");
     console.log("response signature 2", response);
+
 
     if (response.value && response.value.err === null) {
       store.dispatch("setStatus", StatusType.ChoosingParameters);
