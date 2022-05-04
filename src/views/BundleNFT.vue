@@ -63,7 +63,7 @@
 import {
   actions,
 } from "@metaplex/js";
-import { reactive, onBeforeMount, ref, computed } from "vue";
+import { reactive, onBeforeMount, ref, computed, onMounted } from "vue";
 import { useStore } from "vuex";
 import { Account, PublicKey, SystemProgram, Keypair, TransactionInstruction, Transaction } from "@solana/web3.js";
 import { AccountLayout, TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
@@ -115,13 +115,13 @@ const bundleObj = reactive({
   use: null
 });
 
-const nftObj = reactive({
-  metadata: {
-    title: "NFT token 2 title",
-    description: "NFT token 2 description",
-    media: null,
-  }
-});
+// const nftObj = reactive({
+//   metadata: {
+//     title: "NFT token 2 title",
+//     description: "NFT token 2 description",
+//     media: null,
+//   }
+// });
 
 const getNavigation = [{
   text: "Back to Gallery",
@@ -168,6 +168,21 @@ onBeforeMount(() => {
   nftArray.value = sessionStorage.getItem("tokens_id").split(",");
 
   console.log(CONTRACT_PROGRAM_ID, "store.nftArvault_idray");
+});
+
+onMounted(async ()=> {
+  // const test = getMintInfo(getSolanaInstance.value, new PublicKey("4syogkhaM4kvLEe2TjwbXRSdhw43YC2aGTACWQdfajWj"));
+  
+  const test = await PublicKey.findProgramAddress(
+    [
+      getSolanaWalletInstance.value.publicKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      new PublicKey("4syogkhaM4kvLEe2TjwbXRSdhw43YC2aGTACWQdfajWj").toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+
+  console.log(test[0].toString(), "mounted");
 });
 
 const bundleNFTs = async () => {
@@ -250,7 +265,30 @@ const bundleNFTs = async () => {
       uri: getNFTdeployResult.value,
       maxSupply: 1,
     });
+
+    const response = await connection.confirmTransaction(signature.txId, "finalized");
+
+    const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
+    console.log(bundleMintAuthority.toString(), "bundleMintAuthority");
+
+    const bundleStorageTokenAccountProgram = await PublicKey.findProgramAddress(
+      [
+        signature.mint.toBuffer(),
+      ],
+      CONTRACT_PROGRAM_ID
+    );
+
     const bundleStorageAccount = new Account();
+
+    const setBundleAuthorityTransaction = Token.createSetAuthorityInstruction(
+      TOKEN_PROGRAM_ID,
+      bundleStorageTokenAccountProgram[0],
+      null,
+      "MintTokens",
+      bundleMintAuthority,
+      [],
+    );
+    console.log(setBundleAuthorityTransaction, "setBundleAuthority");
 
     const bundleStorageTokenAccountIx = SystemProgram.createAccount({
       programId: CONTRACT_PROGRAM_ID,
@@ -264,12 +302,6 @@ const bundleNFTs = async () => {
 
     console.log(bundleStorageTokenAccountIx.keys[0].pubkey.toString(), "bundleStorageTokenAccountIx toString 0");
     console.log(bundleStorageTokenAccountIx.keys[1].pubkey.toString(), "bundleStorageTokenAccountIx toString 0");
-    const bundleStorageTokenAccountProgram = await PublicKey.findProgramAddress(
-      [
-        signature.mint.toBuffer(),
-      ],
-      CONTRACT_PROGRAM_ID
-    );
     console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
 
     const programs_account_for_mint1 = Token.createInitAccountInstruction(
@@ -296,7 +328,6 @@ const bundleNFTs = async () => {
       ],
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
-    const response = await connection.confirmTransaction(signature.txId, "processed");
 
     console.log(programs_account_for_mint2, "programs_account_for_mint2");
     console.log(programs_account_for_mint1.keys[0].pubkey.toString(), "programs_account_for_mint1");
@@ -348,6 +379,7 @@ const bundleNFTs = async () => {
         programs_account_for_mint2,
         bundleStorageTokenAccountIx,
         initEscrowIx,
+        setBundleAuthorityTransaction,
       );
     console.log("tx 1", tx);
     console.log(tempTokenAccount1, "tempTokenAccount1.mint");
@@ -358,6 +390,7 @@ const bundleNFTs = async () => {
       tempTokenAccount1,
       tempTokenAccount2,
       bundleStorageAccount,
+      bundleMintAuthority,
     ], {skipPreflight: false, preflightCommitment: "singleGossip"});
     const response3 = await connection.confirmTransaction(sendTx, "processed");
     console.log("signature 1", sendTx);
@@ -372,6 +405,6 @@ const bundleNFTs = async () => {
 };
 
 const setUploadedImg = (src) => {
-  nftObj.metadata.media = src; 
+  bundleObj.image = src; 
 };
 </script>

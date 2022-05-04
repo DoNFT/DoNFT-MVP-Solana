@@ -56,10 +56,21 @@ import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import statusMixin from "@/mixins/StatusMixin";
 import { notify } from "@kyvg/vue3-notification";
+import { PublicKey, Keypair } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+import * as bs58 from "bs58";
 
 import NavBar from "@/components/NavBar/NavBar";
 import Uploader from "@/components/Uploader/Uploader";
 import Spinner from "@/components/Spinner";
+
+const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+);
+
+const fullAccount = Keypair.fromSecretKey(
+  bs58.decode("43tnSS45fGJwAiGdpNyRBATLUqX4BVFMLynVXQzjrBeWrcDEESFyxVPQpG56kWEi3wwiG5apo7j6HsMkc6DVHjU5")
+);
 
 const store = useStore();
 const router = useRouter();
@@ -120,8 +131,9 @@ const getNFTdeployResult = computed({
   },
 });
 
-onMounted(() => {
+onMounted(async () => {
   console.log(actions, "actions");
+  // console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
 });
 
 const setUploadedImg = (img) => {
@@ -134,24 +146,75 @@ const createNewNFT = async () => {
     const connection = getSolanaInstance.value;
 
     store.dispatch("setStatus", StatusType.DeployingToIPFS);
-    await store.dispatch("setDeployToIPFS", nftObj);
+    // await store.dispatch("setDeployToIPFS", nftObj);
 
     store.dispatch("setStatus", StatusType.Approving);
     console.log(getNFTdeployResult, "CREATING");
     const signature = await actions.mintNFT({
       connection,
       wallet: getSolanaWalletInstance.value,
-      uri: getNFTdeployResult.value,
+      uri: "https://ipfs.io/ipfs/QmRxrJnUhpZQSvVArU173DGbjHRyqdUi1vrda3ZHthx4jT",
       maxSupply: 1
     });
+    const response = await connection.confirmTransaction(signature.txId, "finalized");
+    console.log(signature.mint.toString(), "signature mint");
 
+    const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
+    console.log(bundleMintAuthority.toString(), "bundleMintAuthority");
+
+    const bundleStorageTokenAccountProgram = await PublicKey.findProgramAddress(
+      [
+        getSolanaWalletInstance.value.publicKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        signature.mint.toBuffer(),
+      ],
+      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    );
+    const tokenInstance = new Token(getSolanaInstance.value, signature.mint, SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID, fullAccount);
+    console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
     console.log(signature.mint.toString(), "signature.mint");
     console.log("signature 1", signature);
+    console.log("full 1", fullAccount);
     store.dispatch("setStatus", StatusType.Minting);
-    const response = await connection.confirmTransaction(signature.txId, "processed");
     console.log("response signature 2", response);
+    console.log("tokenInstance signature 2", tokenInstance);
 
+    const setBundleAuthority = await tokenInstance.setAuthority(
+      getSolanaWalletInstance.value.publicKey,
+      null,
+      "MintTokens",
+      signature.mint,
+      [fullAccount],
+    );
 
+    // const setBundleAuthority = await sendAndConfirmTransaction(
+    //   "SetAuthority",
+    //   connection2,
+    //   new Transaction().add(
+    //     Token.createSetAuthorityInstruction(
+    //       TOKEN_PROGRAM_ID,
+    //       getSolanaWalletInstance.value.publicKey,
+    //       null,
+    //       "MintTokens",
+    //       bundleMintAuthority,
+    //       [],
+    //     ),
+    //   ),
+    //   getSolanaWalletInstance.value,
+    //   [],
+    //   {skipPreflight: false, preflightCommitment: "singleGossip"}
+    // );
+
+    // const tx = new Transaction()
+    //   .add(
+    //     setBundleAuthority,
+    //   );
+
+    // const sendTx = await connection.sendTransaction(tx, [bundleStorageTokenAccountProgram[0]], {skipPreflight: false, preflightCommitment: "singleGossip"});
+    // console.log(sendTx, "FINAL RESPONSE sendTx");
+    // const response3 = await connection.confirmTransaction(sendTx, "processed");
+
+    console.log(setBundleAuthority, "FINAL RESPONSE");
     if (response.value && response.value.err === null) {
       store.dispatch("setStatus", StatusType.ChoosingParameters);
       store.dispatch("setAllSolanaNFts");

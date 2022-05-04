@@ -1,16 +1,8 @@
 import untar from "js-untar";
-import { NFTStorage } from "nft.storage/dist/bundle.esm.min.js";
 const CID_RE = /Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,}/m;
 
 import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
-const API_KEY = process.env.VUE_APP_NFT_STORAGE_API_KEY;
-
-const client = new NFTStorage({
-  token: API_KEY,
-});
-
-console.log(API_KEY, "keu");
 
 export async function loadAllNFTs(solanaInstance, walletInstance) {
   try {
@@ -32,18 +24,19 @@ export async function loadAllNFTs(solanaInstance, walletInstance) {
 async function pushImageToIpfs(ipfsInstance, objectURL) {
   let cidV1 = "";
   try {
-
-    // string property `name` identifying the asset is required
-    // at validateERC1155 --- nft STORAGE
     let cid = "";
     let data = null;
     await fetch(objectURL)
-      .then(function(res){return res.arrayBuffer();})
-      .then(function(buf){ data = new File([buf], "nft.jpg", {type: "image/*"});});
-    console.log(data, "data 1");
-    console.log(data, "data 2");
-    console.log(cid, "cid pushImageToIpfs");
-    cidV1 = data;
+      .then(res => {
+        console.log(res, "buffer res");
+        return res.arrayBuffer();
+      })
+      .then(buffer => {
+        console.log(buffer, "buffer data");
+        data = new Uint8Array(buffer);
+      });
+    cid = await ipfsInstance.add(data);
+    cidV1 = cid.path;
   } catch(err) {
     console.log(err, "err pushImageToIpfs");
   }
@@ -54,9 +47,7 @@ async function pushImageToIpfs(ipfsInstance, objectURL) {
 async function pushObjectToIpfs(ipfsInstance, object) {
   let cid = null;
   try {
-    console.log(object, "object");
-    cid = await client.store(object);
-    console.log(cid, "cid");
+    cid = await ipfsInstance.add(JSON.stringify(object));
   } catch(err) {
     console.log(err, "err pushObjectToIpfs");
   }
@@ -64,27 +55,26 @@ async function pushObjectToIpfs(ipfsInstance, object) {
 }
 
 export async function deployNFTtoIPFS(ipfsInstance, meta) {
-  let imageBlob = await pushImageToIpfs(ipfsInstance, meta.image);
+  let imageCID = await pushImageToIpfs(ipfsInstance, meta.image);
   // let meta = JSON.parse(JSON.stringify(oldMeta));
   // meta.animation_url = `ipfs://${imageCID}`;
-  // const cid = await client.store(imageBlob);
-  console.log(imageBlob, meta, "deployNFTtoIPFS");
+  console.log(ipfsInstance, meta, "metaDATA");
+  console.log(imageCID, "imageCID");
   let uriJSON = {
     ...meta,
-    image: imageBlob,
+    image: `https://ipfs.io/ipfs/${imageCID}`,
     properties: {
       ...meta.properties,
       files: [
         {
-          uri: imageBlob,
-          type: "image/*"
+          uri: `https://ipfs.io/ipfs/${imageCID}`,
+          type: "image/jpeg"
         }
       ]
     }
   };
   const metaDataCID = await pushObjectToIpfs(ipfsInstance, uriJSON);
-  console.log(metaDataCID, "metaDataCID");
-  return `https://${metaDataCID.ipnft}.ipfs.dweb.link/metadata.json`;
+  return `https://ipfs.io/ipfs/${metaDataCID.path}`;
 }
 
 export async function getImageForTokenByURI(ipfsInstance, imageAddress) {
