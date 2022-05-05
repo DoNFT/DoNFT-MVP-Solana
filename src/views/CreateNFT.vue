@@ -170,7 +170,7 @@ const createNewNFT = async () => {
       ],
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
-    const tokenInstance = new Token(getSolanaInstance.value, signature.mint, SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID, fullAccount);
+    const tokenInstance = new Token(getSolanaInstance.value, signature.mint, TOKEN_PROGRAM_ID, fullAccount);
     console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
     console.log(signature.mint.toString(), "signature.mint");
     console.log("signature 1", signature);
@@ -179,11 +179,13 @@ const createNewNFT = async () => {
     console.log("response signature 2", response);
     console.log("tokenInstance signature 2", tokenInstance);
 
+    // todo: https://github.com/solana-labs/solana-program-library/blob/48fbb5b7/token/js/src/instructions/setAuthority.ts#L65
+    // https://stackoverflow.com/questions/69050702/how-do-i-remove-the-minting-authority-from-my-custom-token-in-solana-using-sola?rq=1
     const setBundleAuthority = await tokenInstance.setAuthority(
-      getSolanaWalletInstance.value.publicKey,
+      signature.mint,
       null,
       "MintTokens",
-      signature.mint,
+      getSolanaWalletInstance.value.publicKey,
       [fullAccount],
     );
 

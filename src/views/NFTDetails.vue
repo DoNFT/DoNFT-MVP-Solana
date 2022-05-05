@@ -103,7 +103,7 @@ import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { PublicKey } from "@solana/web3.js";
 import { actions } from "@metaplex/js/";
-import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { notify } from "@kyvg/vue3-notification";
 import statusMixin from "@/mixins/StatusMixin";
 
@@ -182,19 +182,21 @@ const burnNFTHandler = async () => {
     const connection = getSolanaInstance.value;
     let mint = new PublicKey(NFTComputedData.value.mint);
     const fromWallet = getSolanaWalletInstance.value;
-    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      fromWallet,
-      mint,
-      fromWallet.publicKey
+    const fromTokenAccount = await PublicKey.findProgramAddress(
+      [
+        getSolanaWalletInstance.value.publicKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+      ],
+      ASSOCIATED_TOKEN_PROGRAM_ID
     );
-    console.log(fromTokenAccount.address.toString(), "fromTokenAccount");
+    console.log(fromTokenAccount[0].toString(), "fromTokenAccount");
 
     store.dispatch("setStatus", StatusType.Approving);
     const signature = await actions.burnToken({
       connection: connection,
       wallet: fromWallet,
-      token: fromTokenAccount.address,
+      token: fromTokenAccount[0],
       mint: mint,
       amount: 1,
       owner: fromWallet.publicKey,
