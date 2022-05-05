@@ -98,14 +98,15 @@
 </template>
 
 <script setup>
-import { reactive, computed } from "vue";
+import { reactive, computed, watch } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Keypair } from "@solana/web3.js";
 import { actions } from "@metaplex/js/";
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 import { notify } from "@kyvg/vue3-notification";
 import statusMixin from "@/mixins/StatusMixin";
+import * as bs58 from "bs58";
 
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
@@ -116,6 +117,10 @@ const nftObj = reactive({
   token_id: [],
   media: "",
 });
+
+const fullAccount = Keypair.fromSecretKey(
+  bs58.decode("43tnSS45fGJwAiGdpNyRBATLUqX4BVFMLynVXQzjrBeWrcDEESFyxVPQpG56kWEi3wwiG5apo7j6HsMkc6DVHjU5")
+);
 
 const router = useRouter();
 const store = useStore();
@@ -173,6 +178,26 @@ const NFTComputedData = computed({
     console.log(getAllNFTs.value, "get all nFTS");
     return null;
   },
+});
+
+watch(() => NFTComputedData.value, async () => {
+  const test = await PublicKey.findProgramAddress(
+    [
+      getSolanaWalletInstance.value.publicKey.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      new PublicKey(NFTComputedData.value.mint).toBuffer(),
+    ],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+
+  const TokenMintAccountPubkey1 = (await getSolanaInstance.value.getParsedAccountInfo(test[0], "devnet"));
+  const tokenInstance = new Token(getSolanaInstance.value, test[0], TOKEN_PROGRAM_ID, fullAccount);
+  console.log(test[0].toString(), "mounted");
+  console.log(tokenInstance, "tokenInstance");
+
+  console.log(TokenMintAccountPubkey1, "info");
+  const info2 = await tokenInstance.getAccountInfo(new PublicKey(TokenMintAccountPubkey1.value.data.parsed.info.mint));
+  console.log(info2, "info2");
 });
 
 const burnNFTHandler = async () => {

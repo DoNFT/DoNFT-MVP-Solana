@@ -57,7 +57,7 @@ import { useStore } from "vuex";
 import statusMixin from "@/mixins/StatusMixin";
 import { notify } from "@kyvg/vue3-notification";
 import { PublicKey, Keypair } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as bs58 from "bs58";
 
 import NavBar from "@/components/NavBar/NavBar";
@@ -170,24 +170,24 @@ const createNewNFT = async () => {
       ],
       SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
     );
-    const tokenInstance = new Token(getSolanaInstance.value, signature.mint, TOKEN_PROGRAM_ID, fullAccount);
+    // const tokenInstance = new Token(getSolanaInstance.value, signature.mint, TOKEN_PROGRAM_ID, fullAccount);
     console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
     console.log(signature.mint.toString(), "signature.mint");
     console.log("signature 1", signature);
     console.log("full 1", fullAccount);
     store.dispatch("setStatus", StatusType.Minting);
     console.log("response signature 2", response);
-    console.log("tokenInstance signature 2", tokenInstance);
+    // console.log("tokenInstance signature 2", tokenInstance);
 
     // todo: https://github.com/solana-labs/solana-program-library/blob/48fbb5b7/token/js/src/instructions/setAuthority.ts#L65
     // https://stackoverflow.com/questions/69050702/how-do-i-remove-the-minting-authority-from-my-custom-token-in-solana-using-sola?rq=1
-    const setBundleAuthority = await tokenInstance.setAuthority(
-      signature.mint,
-      null,
-      "MintTokens",
-      getSolanaWalletInstance.value.publicKey,
-      [fullAccount],
-    );
+    // const setBundleAuthority = await tokenInstance.setAuthority(
+    //   signature.mint,
+    //   null,
+    //   "MintTokens",
+    //   getSolanaWalletInstance.value.publicKey,
+    //   [fullAccount],
+    // );
 
     // const setBundleAuthority = await sendAndConfirmTransaction(
     //   "SetAuthority",
@@ -216,7 +216,7 @@ const createNewNFT = async () => {
     // console.log(sendTx, "FINAL RESPONSE sendTx");
     // const response3 = await connection.confirmTransaction(sendTx, "processed");
 
-    console.log(setBundleAuthority, "FINAL RESPONSE");
+    // console.log(setBundleAuthority, "FINAL RESPONSE");
     if (response.value && response.value.err === null) {
       store.dispatch("setStatus", StatusType.ChoosingParameters);
       store.dispatch("setAllSolanaNFts");

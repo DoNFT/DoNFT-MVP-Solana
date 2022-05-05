@@ -245,16 +245,6 @@ const bundleNFTs = async () => {
     });
 
 
-    // BUNDLE STORAGE
-    // const bundleStorageTokenAccountIx = SystemProgram.createAccountWithSeed({
-    //   basePubkey: keyWallet,
-    //   fromPubkey: keyWallet,
-    //   lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
-    //   newAccountPubkey: bundleStorageAccount.publicKey,
-    //   programId: TOKEN_PROGRAM_ID,
-    //   seed: "payer",
-    //   space: 97,
-    // });
     // store.dispatch("setStatus", StatusType.DeployingToIPFS);
     await store.dispatch("setDeployToIPFS", bundleObj);
     // store.dispatch("setStatus", StatusType.Approving);
@@ -278,17 +268,35 @@ const bundleNFTs = async () => {
       CONTRACT_PROGRAM_ID
     );
 
-    const bundleStorageAccount = new Account();
+    const bundleStorageAccount = new Keypair();
+    // const transferAcc = await PublicKey.createWithSeed(
+    //   keyWallet,
+    //   "payer",
+    //   CONTRACT_PROGRAM_ID,
+    // );
 
-    const setBundleAuthorityTransaction = Token.createSetAuthorityInstruction(
-      TOKEN_PROGRAM_ID,
-      bundleStorageTokenAccountProgram[0],
-      null,
-      "MintTokens",
-      bundleMintAuthority,
-      [],
-    );
-    console.log(setBundleAuthorityTransaction, "setBundleAuthority");
+    // console.log(transferAcc, "transferAcc");
+
+    // const setBundleAuthorityTransaction = Token.createSetAuthorityInstruction(
+    //   TOKEN_PROGRAM_ID,
+    //   bundleStorageTokenAccountProgram[0],
+    //   null,
+    //   "MintTokens",
+    //   bundleMintAuthority,
+    //   [],
+    // );
+    // console.log(setBundleAuthorityTransaction, "setBundleAuthority");
+
+    // BUNDLE STORAGE
+    // const bundleStorageTokenAccountIx = SystemProgram.createAccountWithSeed({
+    //   basePubkey: keyWallet,
+    //   fromPubkey: keyWallet,
+    //   lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
+    //   newAccountPubkey: transferAcc,
+    //   programId: CONTRACT_PROGRAM_ID,
+    //   seed: "payer",
+    //   space: 104,
+    // });
 
     const bundleStorageTokenAccountIx = SystemProgram.createAccount({
       programId: CONTRACT_PROGRAM_ID,
@@ -379,18 +387,16 @@ const bundleNFTs = async () => {
         programs_account_for_mint2,
         bundleStorageTokenAccountIx,
         initEscrowIx,
-        setBundleAuthorityTransaction,
       );
     console.log("tx 1", tx);
     console.log(tempTokenAccount1, "tempTokenAccount1.mint");
     console.log(tempTokenAccount2, "tempTokenAccount2.mint");
-    console.log(bundleStorageAccount, "bundleStorageAccount.mint");
+    console.log(bundleStorageAccount.publicKey.toString(), "bundleStorageAccount.mint");
     const sendTx = await connection.sendTransaction(tx, [
       fullAccount,
       tempTokenAccount1,
       tempTokenAccount2,
       bundleStorageAccount,
-      bundleMintAuthority,
     ], {skipPreflight: false, preflightCommitment: "singleGossip"});
     const response3 = await connection.confirmTransaction(sendTx, "processed");
     console.log("signature 1", sendTx);
