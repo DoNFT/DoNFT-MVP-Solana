@@ -4,9 +4,9 @@
     <main>
       <h1>Create new NFT</h1>
       <div class="form-nft">
-        <uploader @selected="setUploadedImg"/>
+        <uploader-comp @selected="setUploadedImg"/>
         <div class="form-ntf__inputs">
-          <span class="form-nft-send__inputs-title">Contract</span>
+          <!-- <span class="form-nft-send__inputs-title">Contract</span> -->
           <!-- <div class="select-wrap">
             <select v-model="nftObj.contract_id">
               <option v-for="(item, key) in contractsArr" :key="key" :value="item.getter">{{item.name}}</option>
@@ -19,13 +19,13 @@
             class="input form-nft__input"
             v-model="nftObj.name"
           >
-          <span class="form-nft-send__inputs-title">Description</span>
+          <!-- <span class="form-nft-send__inputs-title">Description</span>
           <textarea
             type="text"
             placeholder="NFT description"
             class="input form-nft__input form-nft__textarea"
             v-model="nftObj.description"
-          />
+          /> -->
           <button
             class="main-btn"
             @click.prevent="createNewNFT"
@@ -48,29 +48,19 @@
 </template>
 
 <script setup>
-import {
-  actions,
-} from "@metaplex/js";
+import { actions } from "@metaplex/js";
 import { reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import statusMixin from "@/mixins/StatusMixin";
 import { notify } from "@kyvg/vue3-notification";
-import { PublicKey, Keypair } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import * as bs58 from "bs58";
+import { Keypair } from "@solana/web3.js";
 
 import NavBar from "@/components/NavBar/NavBar";
-import Uploader from "@/components/Uploader/Uploader";
+import UploaderComp from "@/components/Uploader/UploaderComp";
 import Spinner from "@/components/Spinner";
 
-const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID = new PublicKey(
-  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
-);
-
-const fullAccount = Keypair.fromSecretKey(
-  bs58.decode("43tnSS45fGJwAiGdpNyRBATLUqX4BVFMLynVXQzjrBeWrcDEESFyxVPQpG56kWEi3wwiG5apo7j6HsMkc6DVHjU5")
-);
+const fullAccount = Keypair.fromSecretKey(Uint8Array.from([168,137,178,118,85,0,219,78,149,104,214,158,185,33,196,108,238,183,141,26,35,60,189,245,167,33,237,202,49,205,192,220,41,251,23,23,113,90,97,50,214,88,148,121,99,2,223,81,55,89,151,23,238,43,56,91,242,238,27,97,242,110,125,214]));
 
 const store = useStore();
 const router = useRouter();
@@ -93,7 +83,7 @@ const nftObj = reactive({
     category: "image",
     creators: [
       {
-        "address": "8T8zhN7AAR3UBfYhiBvKkzS39ii3AZMARZZz2KjA5UnV",
+        "address": "3psnJUFeJ4QyHwKjbfycFKrFap9FxHJehAYmMc3ZRBWV",
         "share": 100
       }
     ]
@@ -140,38 +130,40 @@ const setUploadedImg = (img) => {
   nftObj.image = img; 
 };
 
+//"https://ipfs.io/ipfs/QmX4rTazAq9gmJJJBP3a9FFyQZnoYQfqUUCCizRyhopcAt"
+
 const createNewNFT = async () => {
   console.log(nftObj, "NFT OBJ");
   try {
     const connection = getSolanaInstance.value;
 
     store.dispatch("setStatus", StatusType.DeployingToIPFS);
-    // await store.dispatch("setDeployToIPFS", nftObj);
+    await store.dispatch("setDeployToIPFS", nftObj);
 
     store.dispatch("setStatus", StatusType.Approving);
     console.log(getNFTdeployResult, "CREATING");
     const signature = await actions.mintNFT({
       connection,
       wallet: getSolanaWalletInstance.value,
-      uri: "https://ipfs.io/ipfs/QmRxrJnUhpZQSvVArU173DGbjHRyqdUi1vrda3ZHthx4jT",
+      uri: getNFTdeployResult.value,
       maxSupply: 1
     });
     const response = await connection.confirmTransaction(signature.txId, "finalized");
     console.log(signature.mint.toString(), "signature mint");
 
-    const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
-    console.log(bundleMintAuthority.toString(), "bundleMintAuthority");
+    // const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
+    // console.log(bundleMintAuthority.toString(), "bundleMintAuthority");
 
-    const bundleStorageTokenAccountProgram = await PublicKey.findProgramAddress(
-      [
-        getSolanaWalletInstance.value.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        signature.mint.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    );
+    // const bundleStorageTokenAccountProgram = await PublicKey.findProgramAddress(
+    //   [
+    //     getSolanaWalletInstance.value.publicKey.toBuffer(),
+    //     TOKEN_PROGRAM_ID.toBuffer(),
+    //     signature.mint.toBuffer(),
+    //   ],
+    //   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+    // );
     // const tokenInstance = new Token(getSolanaInstance.value, signature.mint, TOKEN_PROGRAM_ID, fullAccount);
-    console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
+    // console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
     console.log(signature.mint.toString(), "signature.mint");
     console.log("signature 1", signature);
     console.log("full 1", fullAccount);
