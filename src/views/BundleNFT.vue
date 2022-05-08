@@ -317,13 +317,6 @@ const bundleNFTs = async () => {
       space: 104,
     });
 
-    // const bundleStorageTokenAccountIx = SystemProgram.createAccount({
-    //   programId: CONTRACT_PROGRAM_ID,
-    //   space: 104,
-    //   lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
-    //   fromPubkey: keyWallet,
-    //   newAccountPubkey: bundleStorageTokenAccountProgram[0]
-    // });
     console.log(bundleStorageTokenAccountIx, "bundleStorageTokenAccountIx");
 
 

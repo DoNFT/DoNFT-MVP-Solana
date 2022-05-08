@@ -68,7 +68,7 @@ export async function deployNFTtoIPFS(ipfsInstance, meta) {
       files: [
         {
           uri: `https://ipfs.io/ipfs/${imageCID}`,
-          type: "image/jpeg"
+          type: "image/*"
         }
       ]
     }
