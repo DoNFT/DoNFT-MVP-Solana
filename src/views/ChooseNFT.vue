@@ -81,6 +81,13 @@ const getNav = computed({
           id: token_id.value && token_id.value.length > 1 ? token_id.value : null
         },
       },
+      {
+        text: "Effect",
+        name: "AddEffect",
+        params: {
+          id: token_id.value && token_id.value.length === 1 ? token_id.value[0] : ""
+        },
+      },
     ];
   },
 });

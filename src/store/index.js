@@ -22,6 +22,7 @@ export default createStore({
     allNFTs: [],
     currentNFT: {},
     walletError: false,
+    nftsAreLoaded: false,
   },
   mutations: {
     setStatus (state, status) {
@@ -29,6 +30,9 @@ export default createStore({
     },
     setIpfs (state, ipfsInstance) {
       state.ipfs = ipfsInstance;
+    },
+    SET_NFTS_LOADED(state, payload) {
+      state.nftsAreLoaded = payload;
     },
     SET_BUNDLE_NFTS (state, payload) {
       sessionStorage.setItem("tokens_id", payload);
@@ -118,7 +122,7 @@ export default createStore({
     },
     async setAllSolanaNFts ({commit, getters}) {
       commit("SET_LOADING_NFTS", true);
-      commit("SET_ALL_NFTS", await loadAllNFTs(getters.getSolanaInstance, getters.getSolanaWalletInstance));
+      commit("SET_ALL_NFTS", await loadAllNFTs(getters.getSolanaInstance, getters.getSolanaWalletInstance, commit));
       commit("SET_LOADING_NFTS", false);
     },
   },
@@ -135,5 +139,6 @@ export default createStore({
     getCurrentNFT: state => state.currentNFT,
     getLoadingNFTsStatus: state => state.loadingNFTs,
     getWalletError: state => state.walletError,
+    getNFTsLoadStatus: state => state.nftsAreLoaded,
   },
 });

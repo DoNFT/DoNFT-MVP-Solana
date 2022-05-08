@@ -13,6 +13,7 @@ import SendNFT from "@/views/SendNFT";
 import ChooseNFT from "@/views/ChooseNFT";
 import NFTDetails from "@/views/NFTDetails";
 import BundleNFT from "@/views/BundleNFT";
+import AddEffect from "@/views/AddEffect";
 
 const { StatusType } = statusMixin();
 
@@ -57,6 +58,27 @@ const routes = [
     name: "BundleNFT",
     component: BundleNFT,
     meta: { title: "Do[NFT]", requiresAuth: true }
+  },
+  {
+    path: "/add_effect/:id",
+    name: "AddEffect",
+    component: AddEffect,
+    meta: { title: "Do[NFT]", requiresAuth: true },
+    // beforeEnter(to, _from, next) {
+    //   const NFTChoice = store.getters.getAllNFTs.find(x => x.token_id === to.params.id);
+    
+    //   if (to.name === "AddEffect" && !NFTChoice) {
+    //     next("/choose_nft");
+    //     notify({
+    //       group: "foo",
+    //       type: "error",
+    //       title: "Important message",
+    //       text: `Sorry, NFT with ID ${to.params.id} does not exit`,
+    //     });
+    //   } else {
+    //     next();
+    //   }
+    // },
   },
 ];
 

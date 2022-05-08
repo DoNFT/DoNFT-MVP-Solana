@@ -4,7 +4,7 @@ const CID_RE = /Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1
 import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
 
-export async function loadAllNFTs(solanaInstance, walletInstance) {
+export async function loadAllNFTs(solanaInstance, walletInstance, commit) {
   try {
     console.log(solanaInstance, walletInstance, "loadAllNFTs");
     const provider = walletInstance;
@@ -14,6 +14,7 @@ export async function loadAllNFTs(solanaInstance, walletInstance) {
       connection: solanaInstance,
       serialization: true,
     });
+    commit("SET_NFTS_LOADED", true);
     console.log("nfts", nfts);
     return nfts;
   } catch (error) {
