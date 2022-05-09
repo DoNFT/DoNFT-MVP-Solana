@@ -71,7 +71,7 @@ import { actions } from "@metaplex/js/";
 import { PublicKey } from "@solana/web3.js";
 import statusMixin from "@/mixins/StatusMixin";
 import { notify } from "@kyvg/vue3-notification";
-import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
@@ -138,11 +138,13 @@ const sendNFTHandler = async () => {
     let mint = new PublicKey(NFTComputedData.value.mint);
     const fromWallet = getSolanaWalletInstance.value;
     const toWallet = new PublicKey(receiver_id.value);
-    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      fromWallet,
-      mint,
-      fromWallet.publicKey
+    const fromTokenAccount = await PublicKey.findProgramAddress(
+      [
+        getSolanaWalletInstance.value.publicKey.toBuffer(),
+        TOKEN_PROGRAM_ID.toBuffer(),
+        mint.toBuffer(),
+      ],
+      ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
     console.log(StatusType, "StatusType");

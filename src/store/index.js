@@ -23,6 +23,7 @@ export default createStore({
     currentNFT: {},
     walletError: false,
     nftsAreLoaded: false,
+    choice: false,
   },
   mutations: {
     setStatus (state, status) {
@@ -30,6 +31,9 @@ export default createStore({
     },
     setIpfs (state, ipfsInstance) {
       state.ipfs = ipfsInstance;
+    },
+    SET_EFFECT_CHOICE(state, choice) {
+      state.effectChoice = choice;
     },
     SET_NFTS_LOADED(state, payload) {
       state.nftsAreLoaded = payload;
@@ -81,10 +85,10 @@ export default createStore({
       const ipfs = await getIPFS();
       commit("setIpfs", await ipfs.create());
     },
-    async setDeployToIPFS ({commit, getters}, meta) {
+    async setDeployToIPFS ({commit, getters}, { isImageDeployed = false, meta }) {
       // dispatch('setStatus', StatusType.DeployingToIPFS)
       console.log(meta, "META");
-      commit("SET_DEPLOYED_NFT", await deployNFTtoIPFS(getters.getIpfs, meta));
+      commit("SET_DEPLOYED_NFT", await deployNFTtoIPFS(getters.getIpfs, meta, isImageDeployed));
     },
     // solana storage a little different with NEAR
     // data of NFT storing link to IPFS with extra data, where are METAPLEX fields stored with image
@@ -140,5 +144,7 @@ export default createStore({
     getLoadingNFTsStatus: state => state.loadingNFTs,
     getWalletError: state => state.walletError,
     getNFTsLoadStatus: state => state.nftsAreLoaded,
+    getEffectChoice: state => state.effectChoice,
+    getEffect: state => state.allNFTs.find(x => x.mint === state.effectChoice),
   },
 });

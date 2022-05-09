@@ -25,7 +25,6 @@ import { onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useWallet } from "solana-wallets-vue";
 import connection from "@/solanaInit";
-import { getEffects } from "@/api";
 
 import HeadBar from "@/components/HeadBar/HeadBar.vue";
 import Spinner from "@/components/Spinner";
@@ -49,9 +48,6 @@ const getAllNFTs = computed({
 
 onMounted(async () => {
   await store.dispatch("setIpfs");
-  console.log(getEffects, "getEffects");
-  const effects = await getEffects();
-  console.log(effects, "effects");
 });
 
 // there are 2 cases of errors in Solana,

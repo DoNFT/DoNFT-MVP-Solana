@@ -1,6 +1,10 @@
 <template>
   <div class="page">
-    <nav-bar :navigation="getNav"/>
+    <nav-bar
+      :navigation="getNav"
+      :show-generate-nft="true"
+      @generate-random-nft="generateRandomNFT"
+    />
     <div
       v-if="getLoadingNFTsStatus" class="loading-container"
     >
@@ -29,14 +33,63 @@
   </div>
 </template>
 <script setup>
-import { computed, ref } from "vue";
+import { actions } from "@metaplex/js";
+import { computed, ref, reactive } from "vue";
 import { useStore } from "vuex";
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
 import Spinner from "@/components/Spinner";
+import { AppError, SystemErrors } from "@/utilities";
+import { notify } from "@kyvg/vue3-notification";
 
 const store = useStore();
 let token_id =  ref([]);
+
+// todo: change creator to wallet id
+let nftObj = reactive({
+  name: "",
+  symbol: "test",
+  seller_fee_basis_points: 0,
+  description: "",
+  image: "",
+  isMutable: 0,
+  properties: {
+    files: [
+      {
+        uri: "",
+        type: "image/*"
+      }
+    ],
+    category: "image",
+    creators: [
+      {
+        "address": "3psnJUFeJ4QyHwKjbfycFKrFap9FxHJehAYmMc3ZRBWV",
+        "share": 100
+      }
+    ]
+  },
+  collection: null,
+  use: null
+});
+
+const randomEffectsArr = [
+  "https://bafkreif42p2e7ep5q3kpuoz2dlpxmctwr7unajswe3ibq6fm6rcinvjwk4.ipfs.nftstorage.link/",
+  "https://bafkreieqmictg2ujcnsrudnq72mmijb3nelwlpzb7gr7xhn77j2aihzlcu.ipfs.nftstorage.link/",
+  "https://bafybeifdsj6pzie4vos42oyiou3lyesyefs5uj7uyxlgjqbdmg7msdvvpi.ipfs.nftstorage.link/",
+  "https://bafybeigfhupxt6zjfqykf54whf7pabtugo5l57n6t5k5or66e4sovsdaiu.ipfs.nftstorage.link/",
+  "https://bafybeibe2px7qbklyk4r7d4mxttb3cqwjx46cdjteg6pd55oajbmxxcvfm.ipfs.nftstorage.link/",
+  "https://bafybeidctmnh3y4g4i57b5pltsvslkjjooa64avfyyoj5de25mouf3ct5e.ipfs.nftstorage.link/",
+  "https://bafybeidctmnh3y4g4i57b5pltsvslkjjooa64avfyyoj5de25mouf3ct5e.ipfs.nftstorage.link/",
+];
+
+const randomNFTArr = [
+  "https://bafkreibsgijmp53nwssszihmmq25q4ippdfqm67hplgvnjajyymsngksey.ipfs.nftstorage.link/",
+  "https://bafkreieflpqauetjd52ywpcyqggp66vtnfqhkmthr6ng3yqagk45yltp6q.ipfs.nftstorage.link/",
+  "https://bafkreig3suewzhzunlimmtfhycefv3szqux5qbsrllvovrk7ftv5aifmhu.ipfs.nftstorage.link/",
+  "https://bafkreih6hd4ysjce443cmiuagli5bnog4g6uz2r66xqmyg4d6ufdh3ttmm.ipfs.nftstorage.link/",
+  "https://bafkreibb4ukdluctf3d377i4r627xcn2ydqtl35yulawwa2ty65cysv6vq.ipfs.nftstorage.link/",
+];
+
 
 const getAllNFTs = computed({
   get() {
@@ -91,6 +144,111 @@ const getNav = computed({
     ];
   },
 });
+
+const getSolanaWalletInstance = computed({
+  get() {
+    return store.getters["getSolanaWalletInstance"];
+  },
+});
+
+// const getStatus = computed({
+//   get() {
+//     return store.getters["getStatus"];
+//   },
+// });
+
+const getSolanaInstance = computed({
+  get() {
+    return store.getters["getSolanaInstance"];
+  },
+});
+
+const getNFTdeployResult = computed({
+  get() {
+    return store.getters["getNFTdeployResult"];
+  },
+});
+
+// Creating Random NFT, depend on Math random
+// currently only for VUE_APP_NFTS_CONTRACT and VUE_APP_NFTS_EFFECTS_CONTRACT
+const generateRandomNFT = async (nftType) => {
+  try {
+    const connection = getSolanaInstance.value;
+    let randomNumber = Math.floor(Math.random() * 5);
+    let randomImage =  randomNFTArr[randomNumber];
+
+    if (nftType === "effectNFT") {
+      randomNumber = Math.floor(Math.random() * 6);
+      randomImage =  randomEffectsArr[randomNumber];
+    }
+
+    console.log(randomNumber, "randomNumber");
+
+    nftObj = {
+      ...nftObj,
+      name: `Test NFT ${randomNumber}`,
+      image: randomImage,
+    };
+
+    if (nftType === "effectNFT") {
+      nftObj = {
+        ...nftObj,
+        name: `Test Effect NFT ${randomNumber}`,
+        image: randomImage,
+      };
+    }
+
+    try {
+      // is Random, for skipping image ipfs deploy
+      await store.dispatch("setDeployToIPFS", { isImageDeployed: true, meta: nftObj });
+    } catch(err) {
+      if (err instanceof AppError) {
+        throw err; 
+      } else {
+        throw SystemErrors.IPFS_SAVE;
+      }
+    }
+
+    try {
+      console.log("CREATING");
+      const signature = await actions.mintNFT({
+        connection,
+        wallet: getSolanaWalletInstance.value,
+        uri: getNFTdeployResult.value,
+        maxSupply: 1
+      });
+      const response = await connection.confirmTransaction(signature.txId, "finalized");
+      console.log(signature, "CREATING");
+      if (response.value && response.value.err === null) {
+        // store.dispatch("setStatus", StatusType.ChoosingParameters);
+        store.dispatch("setAllSolanaNFts");
+        // router.push({ name: "ChooseNFT"});
+        notify({
+          title: "Transaction status",
+          type: "success",
+          text: "NFT successfully Minted!",
+          duration: 6000,
+        });
+      }
+
+    } catch(err) {
+      console.log(err, "error");
+      if (err instanceof AppError) {
+        throw err; 
+      } else {
+        throw SystemErrors.MINT_NFT;
+      }
+    }
+  } catch(err) {
+    console.log(err, "MAIN ERROR");
+    // if(err instanceof AppError) {
+    //   alert(err.message)
+    // } else {
+    //   console.log(err)
+    //   alert("Undefined error")
+    // }
+  }
+};
 
 const chooseNFT = (item) => {
   const index = token_id.value.findIndex((_) => _ === item.mint);

@@ -26,10 +26,6 @@ export async function modifyPicture (objectURL, effectId) {
   return item;
 }
 
-export async function getEffects() {
-  return (await api.get("/effects")).data;
-}
-
 export async function applyNFTsEffect (effectData) {
   let result = null;
 

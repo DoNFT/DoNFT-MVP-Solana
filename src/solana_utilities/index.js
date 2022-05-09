@@ -1,5 +1,5 @@
 import untar from "js-untar";
-const CID_RE = /Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,}/m;
+import { CID_RE } from "@/utilities";
 
 import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
@@ -55,26 +55,35 @@ async function pushObjectToIpfs(ipfsInstance, object) {
   return cid;
 }
 
-export async function deployNFTtoIPFS(ipfsInstance, meta) {
-  let imageCID = await pushImageToIpfs(ipfsInstance, meta.image);
+export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
+  let imageCID = meta.image;
+  console.log(isImageDeployed, "is RANDOM");
+
+  if (!isImageDeployed) {
+    const cid = await pushImageToIpfs(ipfsInstance, meta.image);
+    imageCID = `https://ipfs.io/ipfs/${cid}`;
+  }
+
   // let meta = JSON.parse(JSON.stringify(oldMeta));
   // meta.animation_url = `ipfs://${imageCID}`;
   console.log(ipfsInstance, meta, "metaDATA");
   console.log(imageCID, "imageCID");
   let uriJSON = {
     ...meta,
-    image: `https://ipfs.io/ipfs/${imageCID}`,
+    image: imageCID,
     properties: {
       ...meta.properties,
       files: [
         {
-          uri: `https://ipfs.io/ipfs/${imageCID}`,
+          uri: imageCID,
           type: "image/*"
         }
       ]
     }
   };
+  console.log(uriJSON, "uriJSON");
   const metaDataCID = await pushObjectToIpfs(ipfsInstance, uriJSON);
+  console.log(metaDataCID, "metaDataCID");
   return `https://ipfs.io/ipfs/${metaDataCID.path}`;
 }
 

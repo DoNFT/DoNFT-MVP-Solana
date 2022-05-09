@@ -1,3 +1,5 @@
+export const CID_RE = /Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,}/m;
+
 export function shorten (string, maxLen) {
   if (!string) return "";
   return string.length > maxLen ? string.slice(0, maxLen) + "..." : string;
@@ -23,3 +25,29 @@ export const StatusType = Object.freeze({
 });
 
 export const getIPFS = () => import(/* webpackChunkName: "ipfs" */ "ipfs-core");
+
+export class AppError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code;
+  }
+}
+
+export const SystemErrors = {
+  // IPFS
+  IPFS_IMAGE_SAVE: new AppError("Failed to save media on IPFS", 100),
+  IPFS_OBJECT_SAVE: new AppError("Failed to save object on IPFS", 110),
+  IPFS_GET_IMAGE: new AppError("Failed to get media from IPFS", 120),
+  IPFS_SAVE: new AppError("Failed to save media on IPFS", 130),
+
+  // NFT
+  MINT_NFT: new AppError("Failed to mint NFT", 200),
+  GET_BASE_64: new AppError("Failed to get base 64 of Image", 220),
+  BUNDLE_NFTS: new AppError("Failed to bundle NFTs", 240),
+  UNBUNDLE_NFTS: new AppError("Failed to unbundle NFTs", 250),
+  GET_NEAR_ACCOUNT: new AppError("Failed to get NEAR account", 260),
+  GET_NEAR_NFTS: new AppError("Failed to get account NFTs", 260),
+  INIT_NEAR_CONTRACT: new AppError("Failed to init NEAR contract", 270),
+  NFT_EFFECT_CONFIRM: new AppError("Failed to apply effect to NFT", 280),
+  CONTRACT_UNKNOWN: new AppError("Failed to load contract", 290),
+};

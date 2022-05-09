@@ -14,6 +14,7 @@ import ChooseNFT from "@/views/ChooseNFT";
 import NFTDetails from "@/views/NFTDetails";
 import BundleNFT from "@/views/BundleNFT";
 import AddEffect from "@/views/AddEffect";
+import AddEffectConfirm from "@/views/AddEffectConfirm";
 
 const { StatusType } = statusMixin();
 
@@ -77,6 +78,29 @@ const routes = [
     //     });
     //   } else {
     //     next();
+    //   }
+    // },
+  },
+  {
+    path: "/add_effect/:id/confirm/:effectId",
+    name: "AddEffectConfirm",
+    component: AddEffectConfirm,
+    meta: { title: "Do[NFT]", requiresAuth: true },
+    // async beforeEnter(to, _from, next) {
+    //   const effectChoice = store.getters.getAllNFTs.find(x => x.token_id === to.params.effectId);
+
+    //   const isRedirected = await getTransactionForUser(to, next);
+    
+    //   if (to.name === "AddEffectConfirm" && !effectChoice && !isRedirected) {
+    //     next(`/add_effect/${to.params.id}`);
+    //     Vue.notify({
+    //       group: "foo",
+    //       type: "error",
+    //       title: "Important message",
+    //       text: `Sorry, effect with ID ${to.params.effectId} does not exit`,
+    //     });
+    //   } else {
+    //     next(`/add_effect/${to.params.id}/confirm/${to.params.effectId}`);
     //   }
     // },
   },

@@ -10,17 +10,27 @@
           :class="['main-btn navbar__nav-wrap__item', {
             'navbar__nav-wrap__item--disabled': item.params && !item.params.id ? true : false
           }]"
-          @click="nadleRedirect(item)"
+          @click="handleRedirect(item)"
         >
           <span>{{ item.text }}</span>
         </button>
       </div>
+      <template v-if="showGenerateNft">
+        <button
+          class="navbar__nav-wrap main-btn"
+          @click="generateRandomNFT('testNFT')"
+        >Random NFT</button>
+        <button
+          class="navbar__nav-wrap main-btn"
+          @click="generateRandomNFT('effectNFT')"
+        >Random Effect NFT</button>
+      </template>
     </nav>
   </div>
 </template>
 
 <script setup>
-import { defineProps } from "vue";
+import { defineProps, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 
 defineProps({
@@ -28,10 +38,21 @@ defineProps({
     type: Array,
     default: () => [],
   },
+  showGenerateNft: {
+    type: Boolean,
+    default: false,
+  }
 });
+
+const emitList = defineEmits(["generate-random-nft"]);
+
 const router = useRouter();
 
-const nadleRedirect = (item) => {
+const generateRandomNFT = (val) => {
+  emitList("generate-random-nft", val);
+};
+
+const handleRedirect = (item) => {
   router.push({ name: item.name, params: item.params ? item.params : {} });
 };
 </script>
@@ -51,6 +72,7 @@ const nadleRedirect = (item) => {
 }
 
 .navbar__nav-wrap__item {
+  width: 100%;
   position: relative;
   font-family: 'Roboto mono';
   display: block;
@@ -58,7 +80,7 @@ const nadleRedirect = (item) => {
   max-width: 250px;
   font-size: 24px;
   font-weight: 500;
-  min-width: 215px;
+  min-width: 150px;
   text-align: center;
   background-color: #5ce9bc;
   border: #000 2px solid;
