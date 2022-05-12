@@ -55,6 +55,17 @@
           >Bundle NFTs!</button>
         </div>
       </form>
+
+      <div
+        v-if="[
+          StatusType.Approving,
+          StatusType.Sending,
+          StatusType.Minting,
+        ].includes(getStatus)" class="loading-container"
+      >
+        <spinner :size="92" color="#000" />
+        <h2>{{ getStatusText(getStatus) }}</h2>
+      </div>
     </main>
   </div>
 </template>
@@ -69,10 +80,12 @@ import { useRouter } from "vue-router";
 import { notify } from "@kyvg/vue3-notification";
 import { Account, PublicKey, SystemProgram, Keypair, TransactionInstruction, Transaction } from "@solana/web3.js";
 import { AccountLayout, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+import statusMixin from "@/mixins/StatusMixin";
 
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
 import UploaderComp from "@/components/Uploader/UploaderComp";
+import Spinner from "@/components/Spinner";
 
 const CONTRACT_PROGRAM_ID = new PublicKey(
   "DyPhsdovhyrTktsJS6nrghGvkRoo2FK3ztH1sKKPBDU4",
@@ -80,6 +93,7 @@ const CONTRACT_PROGRAM_ID = new PublicKey(
 
 const fullAccount = Keypair.fromSecretKey(Uint8Array.from([168,137,178,118,85,0,219,78,149,104,214,158,185,33,196,108,238,183,141,26,35,60,189,245,167,33,237,202,49,205,192,220,41,251,23,23,113,90,97,50,214,88,148,121,99,2,223,81,55,89,151,23,238,43,56,91,242,238,27,97,242,110,125,214]));
 
+const { StatusType } = statusMixin();
 const store = useStore();
 const router = useRouter();
 
@@ -118,6 +132,12 @@ const bundleObj = reactive({
 //     media: null,
 //   }
 // });
+
+const getStatus = computed({
+  get() {
+    return store.getters["getStatus"];
+  },
+});
 
 const getNavigation = [{
   text: "Back to Gallery",
@@ -192,63 +212,68 @@ const bundleNFTs = async () => {
 
     const keyWallet = new PublicKey(getSolanaWalletInstance.value.publicKey.toString());
 
+    const tokensMintKeys = [];
+
+    nftArray.value.forEach((item) => {
+      tokensMintKeys.push(new PublicKey(item));
+    });
+
+    console.log(tokensMintKeys, "tokensMintKeys");
+
     console.log(nftArray.value[0], "nftArray.value[0]");
-    const token1 = new PublicKey(nftArray.value[0]);
-    const token2 = new PublicKey(nftArray.value[1]);
     console.log(keyWallet, "keyWallet");
 
-    const BundleTokenAccount1 = await PublicKey.findProgramAddress(
-      [
-        fromWallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        token1.toBuffer(),
-      ],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-    console.log(BundleTokenAccount1[0].toString(), "BundleTokenAccount1");
+    // BundleTokenAccounts (1, 2, 3 ...)
+    const bundleTokenAccountForMints = await Promise.all(tokensMintKeys.map(async (item) => {
+      const token = await PublicKey.findProgramAddress(
+        [
+          fromWallet.publicKey.toBuffer(),
+          TOKEN_PROGRAM_ID.toBuffer(),
+          item.toBuffer(),
+        ],
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
 
-    const BundleTokenAccount2 = await PublicKey.findProgramAddress(
-      [
-        fromWallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        token2.toBuffer(),
-      ],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-    console.log(BundleTokenAccount2[0].toString(), "BundleTokenAccount1");
+      return token;
+    }));
 
-    const TokenMintAccountPubkey1 = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(BundleTokenAccount1[0], "devnet")).value.data.parsed.info.mint);
-    const TokenMintAccountPubkey2 = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(BundleTokenAccount2[0], "devnet")).value.data.parsed.info.mint);
-    console.log(TokenMintAccountPubkey1, "TokenMintAccountPubkey1");
-    console.log(TokenMintAccountPubkey2, "TokenMintAccountPubkey2");
+    const TokenAccountParsedMint = await Promise.all(bundleTokenAccountForMints.map(async (item) => {
+      console.log(item, "TokenAccountParsedMint");
+      const token = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(item[0], "devnet")).value.data.parsed.info.mint);
+      console.log(token.toString(), "token");
+      return token;
+    }));
+    console.log(TokenAccountParsedMint, "TokenAccountParsedMint-----");
+    
+    const tempTokenAccounts = [];
 
-    const tempTokenAccount1 = new Account();
-    const tempTokenAccount2 = new Account();
+    for (let i = 0; i < TokenAccountParsedMint.length; i++) {
+      tempTokenAccounts.push(new Account);
+    }
+
+    console.log(tempTokenAccounts, "tempTokenAccounts------");
+
+    const tempTokenAccountInstruction = await Promise.all(tempTokenAccounts.map(async (item, index) => {
+      console.log(tempTokenAccounts[index].publicKey, index, "tempTokenAccounts[index].publicKey");
+      const instruction = SystemProgram.createAccount({
+        programId: TOKEN_PROGRAM_ID,
+        space: AccountLayout.span,
+        lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
+        fromPubkey: keyWallet,
+        newAccountPubkey: tempTokenAccounts[index].publicKey
+      });
+
+      console.log(instruction, index, "tempTokenAccounts");
+      return instruction;
+    }));
+    console.log(tempTokenAccountInstruction, "tempTokenAccountInstruction------");
 
     // TOKENS STORAGE
-    const createTempTokenAccount1 = SystemProgram.createAccount({
-      programId: TOKEN_PROGRAM_ID,
-      space: AccountLayout.span,
-      lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
-      fromPubkey: keyWallet,
-      newAccountPubkey: tempTokenAccount1.publicKey
-    });
+    store.dispatch("setStatus", StatusType.DeployingToIPFS);
 
-    const createTempTokenAccount2 = SystemProgram.createAccount({
-      programId: TOKEN_PROGRAM_ID,
-      space: AccountLayout.span,
-      lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
-      fromPubkey: keyWallet,
-      newAccountPubkey: tempTokenAccount2.publicKey
-    });
-
-
-    // store.dispatch("setStatus", StatusType.DeployingToIPFS);
-    await store.dispatch("setDeployToIPFS", bundleObj);
-    // store.dispatch("setStatus", StatusType.Approving);
-    //"https://ipfs.io/ipfs/Qmb8yTr9CRhFzTwasPCgXAtLHrfhmNw6i4raJZHr82hzUs"
-
+    await store.dispatch("setDeployToIPFS", { isImageDeployed: false, meta: bundleObj });
     console.log(getNFTdeployResult, "CREATING");
+    // Block of minting BUNDLE NFT
     const signature = await actions.mintNFT({
       connection,
       wallet: getSolanaWalletInstance.value,
@@ -256,11 +281,11 @@ const bundleNFTs = async () => {
       maxSupply: 1,
     });
 
-    const response = await connection.confirmTransaction(signature.txId, "finalized");
+    store.dispatch("setStatus", StatusType.Minting);
 
-    const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
-    console.log(bundleMintAuthority.toString(), "bundleMintAuthority");
+    await connection.confirmTransaction(signature.txId, "finalized");
 
+    // token account of bundle nft
     const bundleStorageTokenAccountProgram = await PublicKey.findProgramAddress(
       [
         signature.mint.toBuffer(),
@@ -268,27 +293,23 @@ const bundleNFTs = async () => {
       CONTRACT_PROGRAM_ID
     );
 
-    const uintSeed = Uint8Array.from([138,133,11,131,247,141,131,185,159,96,109,107,180,236,20,176,63,41,69,76,179,63,201,132,193,76,220,28,143,52,254,215,31,128,60,52,52,212,51,196,74,36,28,61,13,2,210,174,164,102,234,182,74,120,227,153,67,193,173,126,14,38,102,210]);
-    console.log(uintSeed, "uint");
-    const bundleSeedToString = bundleStorageTokenAccountProgram[0].toString();
-    const bundleStorageAccount = Keypair.fromSecretKey(uintSeed);
-    const bundleStorageAccountKey = await PublicKey.findProgramAddress(
-      [
-        bundleStorageAccount.publicKey.toBuffer(),
-      ],
-      CONTRACT_PROGRAM_ID
-    );
-
+    // account for creating program with seed
+    const bundleStorageAccount = Keypair.fromSecretKey(Uint8Array.from([138,133,11,131,247,141,131,185,159,96,109,107,180,236,20,176,63,41,69,76,179,63,201,132,193,76,220,28,143,52,254,215,31,128,60,52,52,212,51,196,74,36,28,61,13,2,210,174,164,102,234,182,74,120,227,153,67,193,173,126,14,38,102,210]));
+    
+    // creating account with seed
+    // seed gonna help us to find bundle inner NFT later
     const seed = signature.mint.toString().substr(0, 20);
-    console.log(seed, "----seed----");
+
     const transferAcc = await PublicKey.createWithSeed(
       bundleStorageAccount.publicKey,
       seed,
       CONTRACT_PROGRAM_ID,
     );
 
-    // console.log(transferAcc, "transferAcc");
+    store.dispatch("setStatus", StatusType.Approving);
+    // todo: SET AUTHORITY for BUNDLE NFT, isMutable property in metadata of token
 
+    // const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
     // const setBundleAuthorityTransaction = Token.createSetAuthorityInstruction(
     //   TOKEN_PROGRAM_ID,
     //   bundleStorageTokenAccountProgram[0],
@@ -300,13 +321,7 @@ const bundleNFTs = async () => {
     // console.log(setBundleAuthorityTransaction, "setBundleAuthority");
 
     // BUNDLE STORAGE
-    console.log(bundleStorageTokenAccountProgram[0], "bundleStorageTokenAccountProgram");
-    console.log(bundleStorageAccount, "bundleStorageAccount");
-    console.log(bundleSeedToString, "-----bundleSeedToString-----");
-    console.log(bundleStorageAccountKey[0].toString(), "-----bundleStorageAccountKey-----");
-    // console.log(transferAcc.toString(), "transferAcc");
-    // const greetedAccount = await getSolanaInstance.value.getAccountInfo(transferAcc);
-    // console.log(greetedAccount, "greetedAccount");
+
     const bundleStorageTokenAccountIx = SystemProgram.createAccountWithSeed({
       basePubkey: bundleStorageAccount.publicKey,
       fromPubkey: keyWallet,
@@ -314,7 +329,7 @@ const bundleNFTs = async () => {
       newAccountPubkey: transferAcc,
       programId: CONTRACT_PROGRAM_ID,
       seed,
-      space: 104,
+      space: 1 + 32 + 4 + (32 * TokenAccountParsedMint.length),
     });
 
     console.log(bundleStorageTokenAccountIx, "bundleStorageTokenAccountIx");
@@ -324,19 +339,23 @@ const bundleNFTs = async () => {
     console.log(bundleStorageTokenAccountIx.keys[1].pubkey.toString(), "bundleStorageTokenAccountIx toString 1");
     // console.log(bundleStorageTokenAccountIx.keys[2].pubkey.toString(), "bundleStorageTokenAccountIx toString 2");
 
-    const programs_account_for_mint1 = Token.createInitAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      TokenMintAccountPubkey1,
-      tempTokenAccount1.publicKey,
-      bundleStorageTokenAccountProgram[0]
-    );
 
-    const programs_account_for_mint2 = Token.createInitAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      TokenMintAccountPubkey2,
-      tempTokenAccount2.publicKey,
-      bundleStorageTokenAccountProgram[0]
-    );
+    // creating program accounts for every inner NFT of bundle
+    const programsAccountForMint = await Promise.all(tempTokenAccounts.map(async (item, index) => {
+      console.log(tempTokenAccounts[index].publicKey, index, "tempTokenAccounts[index].publicKey");
+      const instruction = Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        TokenAccountParsedMint[index],
+        tempTokenAccounts[index].publicKey,
+        bundleStorageTokenAccountProgram[0]
+      );
+
+      console.log(instruction, "tempTokenAccounts");
+      return instruction;
+    }));
+
+    console.log(programsAccountForMint, "programsAccountForMint-----");
+
     console.log(signature, "signature mint");
     console.log(signature.mint.toString(), "signature mint");
 
@@ -349,47 +368,37 @@ const bundleNFTs = async () => {
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
 
-    console.log(programs_account_for_mint2.keys[0].pubkey.toString(), "programs_account_for_mint2");
-    console.log(programs_account_for_mint1.keys[0].pubkey.toString(), "programs_account_for_mint1");
-    console.log(createTempTokenAccount1.keys[1].pubkey.toString(), "createTempTokenAccount1 toString 0");
-    console.log(createTempTokenAccount2.keys[1].pubkey.toString(), "createTempTokenAccount2 toString 1");
-    // const signatureAuthority = await actions.updateMetadata({
-    //   connection,
-    //   wallet: getSolanaWalletInstance.value,
-    //   editionMint: signature.mint,
-    //   newMetadataData: getNFTdeployResult.value,
-    //   newUpdateAuthority: new PublicKey(0),
-    //   primarySaleHappened: false,
-    // });
-    console.log(superNFTTokenAccount[0].toString(), "superNFTTokenAccount[0] mint");
-    console.log(response, "NFT MINTED[0] mint");
+    const bundleTokensSorted = [];
 
-    // const testMint = new PublicKey("8nYT5ntNCnSggDKHCBA8reudGw15uA8TeB8p8Eg3uD8p");
+    bundleTokenAccountForMints.forEach((tokenAcc, index) => {
+      const nftTokenAcc = {
+        pubkey: tokenAcc[0],
+        isSigner: false,
+        isWritable: true,
+      };
 
+      const pdaForMint = {
+        pubkey: programsAccountForMint[index].keys[0].pubkey,
+        isSigner: false,
+        isWritable: true,
+      };
 
-    // const keys =  [
-    //   ...,
-    //   ...,
-    //   EvqYXuLHVRT9wzHiim15fq9mbq2AZXta2wjQqRNZJ33x,
-    //   ...,
-    //   8Z65gyotmRG6eR1yMuShQ5sphTntwdCn71zUMgV4ZwXp,
-    //   2fyJiyztdqSh8AnxM33PJ5nhTJhyExU4FkDxv6niesjP,
-    //   3WpGj3GJRJJDvXaNnBrRioGKeyHU4yun3h7Sb4NbJMgy,
-    //   8RnsEzYCHDWR3xtgEUEm7ZB3qMaxqeSKVRB2LLe7wXsJ,
-    //   2m83YkVzeFEW43R5AJA8bpha7MZ1BdhUKjkPx2y1RBYs
-    // ]
+      bundleTokensSorted.push(nftTokenAcc);
+      bundleTokensSorted.push(pdaForMint);
+    });
+
+    console.log(bundleTokensSorted, "bundleTokensSorted------");
+
     const keys =  [
       { pubkey: keyWallet, isSigner: true, isWritable: false },
       { pubkey: signature.mint, isSigner: false, isWritable: false },
       { pubkey: superNFTTokenAccount[0], isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: bundleStorageTokenAccountIx.keys[1].pubkey, isSigner: false, isWritable: true },
-      { pubkey: BundleTokenAccount1[0], isSigner: false, isWritable: true },
-      { pubkey: programs_account_for_mint1.keys[0].pubkey, isSigner: false, isWritable: true },
-      { pubkey: BundleTokenAccount2[0], isSigner: false, isWritable: true },
-      { pubkey: programs_account_for_mint2.keys[0].pubkey, isSigner: false, isWritable: true },
+      ...bundleTokensSorted
     ];
 
+    console.log(keys, "keys------");
     const bundle_instruction_data = [0, bundleStorageTokenAccountProgram[1]];
 
     // data: [0, 254]
@@ -402,28 +411,36 @@ const bundleNFTs = async () => {
     });
     console.log(initEscrowIx, "initEscrowIx.mint");
 
+    store.dispatch("setStatus", StatusType.Sending);
     const tx = new Transaction()
       .add(
-        createTempTokenAccount1,
-        createTempTokenAccount2,
-        programs_account_for_mint1,
-        programs_account_for_mint2,
-        bundleStorageTokenAccountIx,
-        initEscrowIx,
+        ...tempTokenAccountInstruction,
+        ...programsAccountForMint,
       );
     console.log("tx 1", tx);
-    console.log(tempTokenAccount1, "tempTokenAccount1.mint");
-    console.log(tempTokenAccount2, "tempTokenAccount2.mint");
     console.log(bundleStorageAccount.publicKey.toString(), "bundleStorageAccount.mint");
     const sendTx = await connection.sendTransaction(tx, [
       fullAccount,
-      tempTokenAccount1,
-      tempTokenAccount2,
+      ...tempTokenAccounts,
+    ], {skipPreflight: false, preflightCommitment: "singleGossip"});
+
+    const response3 = await connection.confirmTransaction(sendTx, "finalized");
+    console.log("response3", response3);
+    console.log("signature 1", sendTx);
+    const tx2 = new Transaction()
+      .add(
+        bundleStorageTokenAccountIx,
+        initEscrowIx,
+      );
+
+    const sendTx2 = await connection.sendTransaction(tx2, [
+      fullAccount,
       bundleStorageAccount,
     ], {skipPreflight: false, preflightCommitment: "singleGossip"});
-    const response3 = await connection.confirmTransaction(sendTx, "processed");
-    console.log("signature 1", sendTx);
-    console.log("response3", response3);
+
+    const response4 = await connection.confirmTransaction(sendTx2, "processed");
+    console.log("response4444442", response4);
+    console.log("signature 2", sendTx2);
     // store.dispatch("setStatus", StatusType.Minting);
     // const response = await connection.confirmTransaction(signature.txId, "processed");
     // console.log("response signature 2", response);
@@ -438,12 +455,27 @@ const bundleNFTs = async () => {
         duration: 6000,
       });
     }
+    store.dispatch("setStatus", StatusType.ChoosingParameters);
   } catch(err) {
     console.log(err, "ERROR BUNDLE");
+    store.dispatch("setStatus", StatusType.ChoosingParameters);
+    notify({
+      title: "Transaction status",
+      type: "error",
+      text: `Something wrong, Error: ${err}`,
+      duration: 6000,
+    });
   }
 };
 
 const setUploadedImg = (src) => {
   bundleObj.image = src; 
+};
+
+const getStatusText = (status) => {
+  const statusData = statusMixin(status);
+  console.log(statusData, "statusData");
+
+  return statusData.statusText;
 };
 </script>

@@ -64,7 +64,7 @@ const loadContent = async () => {
 
     if (!nftImage.value || props.isBundle) {
       // here is all data about NFT in METAPLEX Version
-      tokenData = await store.dispatch("setTokenImage", props.metadata.data);
+      tokenData = await store.dispatch("setTokenImage", { token: props.metadata.data, getIPFSurl: false });
 
       // if need extra info for single page, dispatch
       if (props.getInfo) {

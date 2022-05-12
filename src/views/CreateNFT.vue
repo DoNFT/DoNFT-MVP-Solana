@@ -54,13 +54,10 @@ import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import statusMixin from "@/mixins/StatusMixin";
 import { notify } from "@kyvg/vue3-notification";
-import { Keypair } from "@solana/web3.js";
 
 import NavBar from "@/components/NavBar/NavBar";
 import UploaderComp from "@/components/Uploader/UploaderComp";
 import Spinner from "@/components/Spinner";
-
-const fullAccount = Keypair.fromSecretKey(Uint8Array.from([168,137,178,118,85,0,219,78,149,104,214,158,185,33,196,108,238,183,141,26,35,60,189,245,167,33,237,202,49,205,192,220,41,251,23,23,113,90,97,50,214,88,148,121,99,2,223,81,55,89,151,23,238,43,56,91,242,238,27,97,242,110,125,214]));
 
 const store = useStore();
 const router = useRouter();
@@ -138,7 +135,7 @@ const createNewNFT = async () => {
     const connection = getSolanaInstance.value;
 
     store.dispatch("setStatus", StatusType.DeployingToIPFS);
-    await store.dispatch("setDeployToIPFS", nftObj);
+    await store.dispatch("setDeployToIPFS", { isImageDeployed: false, meta: nftObj });
 
     store.dispatch("setStatus", StatusType.Approving);
     console.log(getNFTdeployResult, "CREATING");
@@ -150,63 +147,6 @@ const createNewNFT = async () => {
     });
     const response = await connection.confirmTransaction(signature.txId, "finalized");
     console.log(signature.mint.toString(), "signature mint");
-
-    // const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
-    // console.log(bundleMintAuthority.toString(), "bundleMintAuthority");
-
-    // const bundleStorageTokenAccountProgram = await PublicKey.findProgramAddress(
-    //   [
-    //     getSolanaWalletInstance.value.publicKey.toBuffer(),
-    //     TOKEN_PROGRAM_ID.toBuffer(),
-    //     signature.mint.toBuffer(),
-    //   ],
-    //   SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    // );
-    // const tokenInstance = new Token(getSolanaInstance.value, signature.mint, TOKEN_PROGRAM_ID, fullAccount);
-    // console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
-    console.log(signature.mint.toString(), "signature.mint");
-    console.log("signature 1", signature);
-    console.log("full 1", fullAccount);
-    store.dispatch("setStatus", StatusType.Minting);
-    console.log("response signature 2", response);
-    // console.log("tokenInstance signature 2", tokenInstance);
-
-    // todo: https://github.com/solana-labs/solana-program-library/blob/48fbb5b7/token/js/src/instructions/setAuthority.ts#L65
-    // https://stackoverflow.com/questions/69050702/how-do-i-remove-the-minting-authority-from-my-custom-token-in-solana-using-sola?rq=1
-    // const setBundleAuthority = await tokenInstance.setAuthority(
-    //   signature.mint,
-    //   null,
-    //   "MintTokens",
-    //   getSolanaWalletInstance.value.publicKey,
-    //   [fullAccount],
-    // );
-
-    // const setBundleAuthority = await sendAndConfirmTransaction(
-    //   "SetAuthority",
-    //   connection2,
-    //   new Transaction().add(
-    //     Token.createSetAuthorityInstruction(
-    //       TOKEN_PROGRAM_ID,
-    //       getSolanaWalletInstance.value.publicKey,
-    //       null,
-    //       "MintTokens",
-    //       bundleMintAuthority,
-    //       [],
-    //     ),
-    //   ),
-    //   getSolanaWalletInstance.value,
-    //   [],
-    //   {skipPreflight: false, preflightCommitment: "singleGossip"}
-    // );
-
-    // const tx = new Transaction()
-    //   .add(
-    //     setBundleAuthority,
-    //   );
-
-    // const sendTx = await connection.sendTransaction(tx, [bundleStorageTokenAccountProgram[0]], {skipPreflight: false, preflightCommitment: "singleGossip"});
-    // console.log(sendTx, "FINAL RESPONSE sendTx");
-    // const response3 = await connection.confirmTransaction(sendTx, "processed");
 
     // console.log(setBundleAuthority, "FINAL RESPONSE");
     if (response.value && response.value.err === null) {

@@ -1,5 +1,6 @@
 import untar from "js-untar";
 import { CID_RE } from "@/utilities";
+import { uploadtoIPFS } from "@/api";
 
 import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
@@ -22,28 +23,28 @@ export async function loadAllNFTs(solanaInstance, walletInstance, commit) {
   }
 }
 
-async function pushImageToIpfs(ipfsInstance, objectURL) {
-  let cidV1 = "";
-  try {
-    let cid = "";
-    let data = null;
-    await fetch(objectURL)
-      .then(res => {
-        console.log(res, "buffer res");
-        return res.arrayBuffer();
-      })
-      .then(buffer => {
-        console.log(buffer, "buffer data");
-        data = new Uint8Array(buffer);
-      });
-    cid = await ipfsInstance.add(data);
-    cidV1 = cid.path;
-  } catch(err) {
-    console.log(err, "err pushImageToIpfs");
-  }
+// async function pushImageToIpfs(ipfsInstance, objectURL) {
+//   let cidV1 = "";
+//   try {
+//     let cid = "";
+//     let data = null;
+//     await fetch(objectURL)
+//       .then(res => {
+//         console.log(res, "buffer res");
+//         return res.arrayBuffer();
+//       })
+//       .then(buffer => {
+//         console.log(buffer, "buffer data");
+//         data = new Uint8Array(buffer);
+//       });
+//     cid = await ipfsInstance.add(data);
+//     cidV1 = cid.path;
+//   } catch(err) {
+//     console.log(err, "err pushImageToIpfs");
+//   }
 
-  return cidV1;
-}
+//   return cidV1;
+// }
 
 async function pushObjectToIpfs(ipfsInstance, object) {
   let cid = null;
@@ -60,8 +61,10 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
   console.log(isImageDeployed, "is RANDOM");
 
   if (!isImageDeployed) {
-    const cid = await pushImageToIpfs(ipfsInstance, meta.image);
-    imageCID = `https://ipfs.io/ipfs/${cid}`;
+    const cid = await uploadtoIPFS(meta.image);
+    let executedCID = CID_RE.exec(cid)?.[0];
+    console.log(`https://ipfs.io/ipfs/${executedCID}`, "------------CID---------------");
+    imageCID = `https://ipfs.io/ipfs/${executedCID}`;
   }
 
   // let meta = JSON.parse(JSON.stringify(oldMeta));
@@ -87,12 +90,12 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
   return `https://ipfs.io/ipfs/${metaDataCID.path}`;
 }
 
-export async function getImageForTokenByURI(ipfsInstance, imageAddress) {
+export async function getImageForTokenByURI(ipfsInstance, imageAddress, getIPFSurl) {
   let image;
   if (imageAddress) {
     if (imageAddress.startsWith("ipfs") || imageAddress.startsWith("https://ipfs"))  {
       let cid = CID_RE.exec(imageAddress)?.[0];
-      let localImageURL = await getDataFromIPFS(ipfsInstance, cid);
+      let localImageURL = await getDataFromIPFS(ipfsInstance, cid, getIPFSurl);
       image = localImageURL;
     } else {
       image = imageAddress;
@@ -101,7 +104,7 @@ export async function getImageForTokenByURI(ipfsInstance, imageAddress) {
   return image;
 }
 
-async function getDataFromIPFS(ipfsInstance, cid) {
+async function getDataFromIPFS(ipfsInstance, cid, getIPFSurl) {
   let tokenData = null;
   try {
     if (cid === "" || cid === null || cid === undefined) {
@@ -115,8 +118,14 @@ async function getDataFromIPFS(ipfsInstance, cid) {
     }
     tokenData = Buffer.concat(content).toString();
     tokenData = JSON.parse(tokenData);
+    console.log(tokenData, getIPFSurl, "tokenDATA getDataFromIPFS");
+
+    if (getIPFSurl) {
+      return tokenData;
+    }
     
     if (tokenData.image.startsWith("ipfs") || tokenData.image.startsWith("https://ipfs"))  {
+      console.log(getIPFSurl, "getIPFSurl,  getDataFromIPFS");
       let cid = CID_RE.exec(tokenData.image)?.[0];
       let data = {
         ...tokenData,

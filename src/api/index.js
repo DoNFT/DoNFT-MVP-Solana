@@ -26,6 +26,24 @@ export async function modifyPicture (objectURL, effectId) {
   return item;
 }
 
+export async function uploadtoIPFS (data) {
+  let result = null;
+  const formData = new FormData();
+  const fetchUrl = await fetch(data);
+  const file = await fetchUrl.blob();
+  formData.append("payload", file); 
+
+  try {
+    result = await api.post("/ipfs/upload",  formData);
+    console.log(result, "RESULT");
+  } catch(err) {
+    console.log(err, "error modifyPicture");
+  }
+
+  return result ? result.data : null;
+}
+
+
 export async function applyNFTsEffect (effectData) {
   let result = null;
 

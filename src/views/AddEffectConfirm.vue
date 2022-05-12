@@ -48,17 +48,17 @@
           </div>
         </div>
       </div>
-      <!-- <div
+
+      <div
         v-if="[
-          StatusType.Applying,
-          StatusType.DeployingToIPFS,
-          StatusType.DeployedToIPFS,
-          StatusType.Minting
+          StatusType.Approving,
+          StatusType.Sending,
+          StatusType.Minting,
         ].includes(getStatus)" class="loading-container"
       >
         <spinner :size="92" color="#000" />
-        <h2>{{ statusText }}</h2>
-      </div> -->
+        <h2>{{ getStatusText(getStatus) }}</h2>
+      </div>
     </main>
   </div>
 </template>
@@ -71,8 +71,10 @@ import { useRouter } from "vue-router";
 import Spinner from "@/components/Spinner";
 import TokenCard from "@/components/TokenCard/TokenCard";
 import NavBar from "@/components/NavBar/NavBar";
+
 import { notify } from "@kyvg/vue3-notification";
-// import StatusType from "@/mixins/StatusMixin";
+import statusMixin from "@/mixins/StatusMixin";
+
 import { AppError, SystemErrors, CID_RE } from "@/utilities";
 import { applyNFTsEffect } from "@/api";
 import { Account, PublicKey, SystemProgram, Keypair, TransactionInstruction, Transaction } from "@solana/web3.js";
@@ -80,6 +82,7 @@ import { AccountLayout, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token } f
 
 const store = useStore();
 const router = useRouter();
+const { StatusType } = statusMixin();
 
 const CONTRACT_PROGRAM_ID = new PublicKey(
   "DyPhsdovhyrTktsJS6nrghGvkRoo2FK3ztH1sKKPBDU4",
@@ -112,6 +115,13 @@ let nftObj = reactive({
   },
   collection: null,
   use: null
+});
+
+
+const getStatus = computed({
+  get() {
+    return store.getters["getStatus"];
+  },
 });
 
 const getAllNFTs = computed({
@@ -184,8 +194,10 @@ const handleMint = async () => {
   } else {
     const connection = getSolanaInstance.value;
     const fromWallet = getSolanaWalletInstance.value;
-    const tokenData1 = await store.dispatch("setTokenImage", NFTComputedData.value.data);
-    const tokenData2 = await store.dispatch("setTokenImage", NFTComputedData.value.data);
+    const tokenData1 = await store.dispatch("setTokenImage", { token: NFTComputedData.value.data, getIPFSurl: true });
+    const tokenData2 = await store.dispatch("setTokenImage", { token: getEffect.value.data, getIPFSurl: true });
+    console.log(tokenData1, "tokenData1 CID");
+    console.log(tokenData2, "tokenData2 CID");
 
     const effectObj = {
       original: {
@@ -244,7 +256,6 @@ const handleMint = async () => {
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
-      console.log(BundleTokenAccount1[0].toString(), "BundleTokenAccount1");
 
       const BundleTokenAccount2 = await PublicKey.findProgramAddress(
         [
@@ -258,8 +269,6 @@ const handleMint = async () => {
 
       const TokenMintAccountPubkey1 = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(BundleTokenAccount1[0], "devnet")).value.data.parsed.info.mint);
       const TokenMintAccountPubkey2 = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(BundleTokenAccount2[0], "devnet")).value.data.parsed.info.mint);
-      console.log(TokenMintAccountPubkey1, "TokenMintAccountPubkey1");
-      console.log(TokenMintAccountPubkey2, "TokenMintAccountPubkey2");
 
       const tempTokenAccount1 = new Account();
       const tempTokenAccount2 = new Account();
@@ -295,8 +304,10 @@ const handleMint = async () => {
         maxSupply: 1,
       });
 
-      const response = await connection.confirmTransaction(signature.txId, "finalized");
+      store.dispatch("setStatus", StatusType.Minting);
+      await connection.confirmTransaction(signature.txId, "finalized");
 
+      store.dispatch("setStatus", StatusType.Approving);
       const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
       console.log(bundleMintAuthority.toString(), "bundleMintAuthority");
 
@@ -308,14 +319,7 @@ const handleMint = async () => {
       );
 
       console.log(uintSeed, "uint");
-      const bundleSeedToString = bundleStorageTokenAccountProgram[0].toString();
       const bundleStorageAccount = Keypair.fromSecretKey(uintSeed);
-      const bundleStorageAccountKey = await PublicKey.findProgramAddress(
-        [
-          bundleStorageAccount.publicKey.toBuffer(),
-        ],
-        CONTRACT_PROGRAM_ID
-      );
 
       const seed = signature.mint.toString().substr(0, 20);
       console.log(seed, "----seed----");
@@ -326,13 +330,6 @@ const handleMint = async () => {
       );
 
       // BUNDLE STORAGE
-      console.log(bundleStorageTokenAccountProgram[0], "bundleStorageTokenAccountProgram");
-      console.log(bundleStorageAccount, "bundleStorageAccount");
-      console.log(bundleSeedToString, "-----bundleSeedToString-----");
-      console.log(bundleStorageAccountKey[0].toString(), "-----bundleStorageAccountKey-----");
-      // console.log(transferAcc.toString(), "transferAcc");
-      // const greetedAccount = await getSolanaInstance.value.getAccountInfo(transferAcc);
-      // console.log(greetedAccount, "greetedAccount");
       const bundleStorageTokenAccountIx = SystemProgram.createAccountWithSeed({
         basePubkey: bundleStorageAccount.publicKey,
         fromPubkey: keyWallet,
@@ -340,7 +337,7 @@ const handleMint = async () => {
         newAccountPubkey: transferAcc,
         programId: CONTRACT_PROGRAM_ID,
         seed,
-        space: 104,
+        space: 101,
       });
 
       console.log(bundleStorageTokenAccountIx, "bundleStorageTokenAccountIx");
@@ -375,20 +372,6 @@ const handleMint = async () => {
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      console.log(programs_account_for_mint2.keys[0].pubkey.toString(), "programs_account_for_mint2");
-      console.log(programs_account_for_mint1.keys[0].pubkey.toString(), "programs_account_for_mint1");
-      console.log(createTempTokenAccount1.keys[1].pubkey.toString(), "createTempTokenAccount1 toString 0");
-      console.log(createTempTokenAccount2.keys[1].pubkey.toString(), "createTempTokenAccount2 toString 1");
-      // const signatureAuthority = await actions.updateMetadata({
-      //   connection,
-      //   wallet: getSolanaWalletInstance.value,
-      //   editionMint: signature.mint,
-      //   newMetadataData: getNFTdeployResult.value,
-      //   newUpdateAuthority: new PublicKey(0),
-      //   primarySaleHappened: false,
-      // });
-      console.log(superNFTTokenAccount[0].toString(), "superNFTTokenAccount[0] mint");
-      console.log(response, "NFT MINTED[0] mint");
 
       const keys =  [
         { pubkey: keyWallet, isSigner: true, isWritable: false },
@@ -424,9 +407,7 @@ const handleMint = async () => {
           initEscrowIx,
         );
       console.log("tx 1", tx);
-      console.log(tempTokenAccount1, "tempTokenAccount1.mint");
-      console.log(tempTokenAccount2, "tempTokenAccount2.mint");
-      console.log(bundleStorageAccount.publicKey.toString(), "bundleStorageAccount.mint");
+
       const sendTx = await connection.sendTransaction(tx, [
         fullAccount,
         tempTokenAccount1,
@@ -436,12 +417,14 @@ const handleMint = async () => {
       const response3 = await connection.confirmTransaction(sendTx, "processed");
       console.log("signature 1", sendTx);
       console.log("response3", response3);
+      store.dispatch("setStatus", StatusType.Minting);
       // store.dispatch("setStatus", StatusType.Minting);
       // const response = await connection.confirmTransaction(signature.txId, "processed");
       // console.log("response signature 2", response);
 
       if (response3.value && response3.value.err === null) {
         store.dispatch("setAllSolanaNFts");
+        store.dispatch("setStatus", StatusType.ChoosingParameters);
         router.push({ name: "ChooseNFT"});
         notify({
           title: "Transaction status",
@@ -453,6 +436,14 @@ const handleMint = async () => {
 
     } catch(err) {
       console.log(err, "error");
+      console.log(err, "ERROR BUNDLE");
+      store.dispatch("setStatus", StatusType.ChoosingParameters);
+      notify({
+        title: "Transaction status",
+        type: "error",
+        text: `Something wrong, Error: ${err}`,
+        duration: 6000,
+      });
       if (err instanceof AppError) {
         throw err; 
       } else {
@@ -461,174 +452,11 @@ const handleMint = async () => {
     }
   }
 };
-// export default {
-//   name: "AddEffectConfirm",
 
-//   components: {
-//     Spinner,
-//     NavBar,
-//     TokenCard,
-//   },
+const getStatusText = (status) => {
+  const statusData = statusMixin(status);
+  console.log(statusData, "statusData");
 
-//   data() {
-//     return {
-//       nftObj: {
-//         metadata: {
-//           title: "",
-//           description: "",
-//         },
-//         token_id: [],
-//       },
-//       NFTData: {},
-//       approvedNFTStatuses: [],
-//     };
-//   },
-
-//   mixins: [StatusType],
-
-//   computed: {
-//     ...mapGetters([
-//       "getAllNFTs",
-//       "getNftsAreLoading",
-//       "getStatus",
-//       "getEffect",
-//       "getDeployedPictureMeta",
-//       "getContract",
-//       "getBundleContract",
-//       "getEffectsContract",
-//       "getAccountId",
-//     ]),
-//     // if at least one nft is not approved, disabling btn
-//     checkBundleForApprove() {
-//       return this.approvedNFTStatuses.some((item) => item === false);
-//     },
-//     getNav() {
-//       return [
-//         {
-//           text: "Back to Gallery",
-//           name: "ChooseNFT",
-//           params: null,
-//         },
-//       ];
-//     },
-//     NFTComputedData() {
-//       return this.getAllNFTs.find((item) => item.token_id === this.$route.params.id);
-//     },
-//   },
-
-//   watch: {
-//     getAllNFTs: {
-//       handler(value) {
-//         const data = value.find((item) => item.token_id === this.$route.params.id);
-//         if (this.getAllNFTs && data) {
-//           this.NFTData = data;
-//           this.nftObj.media = data.metadata.media;
-//           this.passNFT(this.NFTComputedData.metadata);
-//         }
-//       },
-//     },
-//   },
-
-//   mounted() {
-//     this.setEffectChoice(this.$route.params.effectId);
-//   },
-
-//   methods: {
-//     ...mapActions([
-//       "setEffectChoice",
-//       "setEffectResult",
-//       "setDeployedPictureMeta",
-//       "passNFT",
-//       "createNewBundleNFT",
-//     ]),
-//     bundleStatusUpdate(data) {
-//       this.approvedNFTStatuses.push(data);
-//     },
-//     // minting NFT with NEW effects
-//     async handleMint() {
-//       if (!this.nftObj.metadata.title) {
-//         alert("Title field is empty");
-//       } else {
-//         try {
-//           const effectObj = {
-//             original: {
-//               contract: this.getContract.contractId,
-//               tokenId: this.NFTComputedData.token_id,
-//               contentUrl: this.NFTComputedData.metadata.media,
-//             },
-//             modificator: {
-//               contract: this.getEffectsContract.contractId,
-//               tokenId: this.getEffect.token_id,
-//               contentUrl: this.getEffect.metadata.media,
-//             },
-//             sender: this.getAccountId,
-//           };
-
-//           try {
-//             await this.setEffectResult(effectObj);
-//           } catch(err) {
-//             console.log(err);
-//             if (err instanceof AppError) {
-//               throw err; 
-//             } else {
-//               throw SystemErrors.NFT_EFFECT_CONFIRM;
-//             }
-//           }
-
-
-//           const bundleArr = [
-//             {
-//               data: this.NFTComputedData,
-//               contract: "list",
-//             },
-//             {
-//               data: this.getEffect,
-//               contract: "effects",
-//             }
-//           ];
-
-//           const bundlesArrApproved = bundleArr.map((item) => {
-//             const obj = {
-//               ...item.data,
-//               contract: item.contract === "list" ? this.getContract.contractId : this.getEffectsContract.contractId,
-//               approval_id: item.data.approved_account_ids[this.getBundleContract.contractId],
-//             };
-
-//             return obj;
-//           });
-
-//           // its calling bundle, because effect NFT combining with usual NFT
-
-
-//           try {
-//             await this.createNewBundleNFT({
-//               token_id: `token-${Date.now()}`,
-//               metadata: {
-//                 title: this.nftObj.metadata.title,
-//                 description: this.nftObj.metadata.description,
-//                 media: this.getDeployedPictureMeta,
-//                 copies: 1,
-//               },
-//               bundles: bundlesArrApproved,
-//             });
-//           } catch(err) {
-//             console.log(err);
-//             if (err instanceof AppError) {
-//               throw err; 
-//             } else {
-//               throw SystemErrors.BUNDLE_NFTS;
-//             }
-//           }
-//         } catch(err) {
-//           if(err instanceof AppError) {
-//             alert(err.message);
-//           } else {
-//             console.log(err);
-//             alert("Undefined error");
-//           }
-//         }
-//       }
-//     },
-//   },
-// };
+  return statusData.statusText;
+};
 </script>

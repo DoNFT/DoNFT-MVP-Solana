@@ -92,13 +92,13 @@ export default createStore({
     },
     // solana storage a little different with NEAR
     // data of NFT storing link to IPFS with extra data, where are METAPLEX fields stored with image
-    // after loading METAPLEX data, we can get real image address
-    async setTokenImage ({getters}, token) {
+    // after loading METAPLEX data, we can get real image addressgetImageIPFSuri
+    async setTokenImage ({getters}, { token, getIPFSurl }) {
       let url = token.uri;
       let data = null;
 
       if (getters.getIpfs) {
-        data = await getImageForTokenByURI(getters.getIpfs, url);
+        data = await getImageForTokenByURI(getters.getIpfs, url, getIPFSurl);
       }
 
       return data;
