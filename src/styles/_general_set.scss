@@ -276,6 +276,10 @@ p {
   flex-direction: column;
   justify-content: space-between;
   margin-left: 40px;
+
+	.effect-confirm & {
+		margin-left: 0;
+	}
 }
 
 .form-nft__bottom {

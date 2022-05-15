@@ -32,6 +32,17 @@ export default createStore({
     setIpfs (state, ipfsInstance) {
       state.ipfs = ipfsInstance;
     },
+    // func for updating recently created NFT
+    ADD_MINTED_NFT(state, payload) {
+      state.allNFTs.push(payload);
+    },
+    REMOVE_FROM_NFT_LIST(state, id) {
+      const index = state.allNFTs.map((item) => item.mint).indexOf(id);
+
+      if (index > -1) {
+        state.allNFTs.splice(index, 1);
+      }
+    },
     SET_EFFECT_CHOICE(state, choice) {
       state.effectChoice = choice;
     },
@@ -125,6 +136,7 @@ export default createStore({
       commit("SET_WALLET_ERROR", payload);
     },
     async setAllSolanaNFts ({commit, getters}) {
+      console.log("setAllSolanaNFts");
       commit("SET_LOADING_NFTS", true);
       commit("SET_ALL_NFTS", await loadAllNFTs(getters.getSolanaInstance, getters.getSolanaWalletInstance, commit));
       commit("SET_LOADING_NFTS", false);

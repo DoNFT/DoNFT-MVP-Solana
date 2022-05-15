@@ -96,11 +96,17 @@ const getNFTsLoadStatus = computed({
 
 const filterEffectsContractCards = computed({
   get() {
-    return getAllNFTs.value.filter((item) => {
-      if (item.mint !== NFTComputedData.value.mint) {
-        return item;
-      }
-    });
+    if (getAllNFTs.value && getAllNFTs.value.length) {
+      const effectContract = [];
+
+      getAllNFTs.value.forEach((item) => {
+        if (item.data.symbol === "effect") effectContract.push(item);
+      });
+
+      return effectContract;
+    }
+
+    return [];
   },
 });
 

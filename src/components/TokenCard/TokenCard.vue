@@ -62,6 +62,11 @@ const loadContent = async () => {
   if (props.metadata) {
     let tokenData = null;
 
+    // case for recently created image with BLOB
+    if (props.metadata.data && props.metadata.data.image)  {
+      nftImage.value = props.metadata.data.image;
+    }
+
     if (!nftImage.value || props.isBundle) {
       // here is all data about NFT in METAPLEX Version
       tokenData = await store.dispatch("setTokenImage", { token: props.metadata.data, getIPFSurl: false });
@@ -70,9 +75,12 @@ const loadContent = async () => {
       if (props.getInfo) {
         store.dispatch("setCurrentNFTdata", tokenData);
       }
+
+      nftImage.value = tokenData ? tokenData.image : null;
     }
 
-    nftImage.value = tokenData ? tokenData.image : null;
+    
+
   }
 };
 </script>

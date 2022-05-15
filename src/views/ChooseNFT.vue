@@ -17,16 +17,27 @@
         v-if="getAllNFTs"
       >
         <div
-          v-for="nft in getAllNFTs"
-          :key="`key-${nft.mint}`"
-          class="nft-cards__contract__item"
-          :class="{ 'chosen-card': cardClass(nft.mint)}"
+          v-for="contractData in filteredNFTbyContract"
+          :key="contractData.name"
+          class="nft-cards__contract"
         >
-          <token-card
-            :metadata="nft"
-            :edit-available="true"
-            @click="chooseNFT(nft)"
-          />
+          <template v-if="contractData.items && contractData.items.length">
+            <h3>Contract: {{contractData.name}}</h3>
+            <div class="nft-cards__contract-inner">
+              <div
+                v-for="nft in contractData.items"
+                :key="`key-${nft.mint}`"
+                class="nft-cards__contract__item"
+                :class="{ 'chosen-card': cardClass(nft.mint)}"
+              >
+                <token-card
+                  :metadata="nft"
+                  :edit-available="true"
+                  @click="chooseNFT(nft)"
+                />
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </main>
@@ -95,6 +106,26 @@ const getAllNFTs = computed({
   get() {
     return store.getters["getAllNFTs"];
   },
+});
+
+const filteredNFTbyContract = computed({
+  get() {
+    if (getAllNFTs.value && getAllNFTs.value.length) {
+      const nftContract = [];
+      const effectContract = [];
+      const bundleContract = [];
+
+      getAllNFTs.value.forEach((item) => {
+        if (item.data.symbol === "nft") nftContract.push(item);
+        if (item.data.symbol === "effect") effectContract.push(item);
+        if (item.data.symbol === "bundle") bundleContract.push(item);
+      });
+
+      return [{ name: "nft",  items: nftContract }, { name: "effect", items: effectContract }, { name: "bundle", items: bundleContract }];
+    }
+
+    return [];
+  }
 });
 
 const getLoadingNFTsStatus = computed({
@@ -187,6 +218,7 @@ const generateRandomNFT = async (nftType) => {
     nftObj = {
       ...nftObj,
       name: `Test NFT ${randomNumber}`,
+      symbol: "nft",
       image: randomImage,
     };
 
@@ -194,6 +226,7 @@ const generateRandomNFT = async (nftType) => {
       nftObj = {
         ...nftObj,
         name: `Test Effect NFT ${randomNumber}`,
+        symbol: "effect",
         image: randomImage,
       };
     }

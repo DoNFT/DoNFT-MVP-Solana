@@ -19,13 +19,13 @@
             class="input form-nft__input"
             v-model="nftObj.name"
           >
-          <!-- <span class="form-nft-send__inputs-title">Description</span>
+          <span class="form-nft-send__inputs-title">NFT symbol</span>
           <textarea
             type="text"
-            placeholder="NFT description"
+            placeholder="NFT symbol"
             class="input form-nft__input form-nft__textarea"
-            v-model="nftObj.description"
-          /> -->
+            v-model="nftObj.symbol"
+          />
           <button
             class="main-btn"
             @click.prevent="createNewNFT"
@@ -65,7 +65,7 @@ const { StatusType } = statusMixin();
 
 const nftObj = reactive({
   name: "NFT token 2 title",
-  symbol: "test",
+  symbol: "nft",
   seller_fee_basis_points: 0,
   description: "NFT token 2 description",
   image: "",

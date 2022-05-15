@@ -113,12 +113,6 @@ import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
 import Spinner from "@/components/Spinner";
 
-// const nftObj = reactive({
-//   receiver_id: "near_testing2.testnet",
-//   token_id: [],
-//   media: "",
-// });
-
 let vaultPubkey = ref(null);
 
 const bundleNFTs = ref([]);

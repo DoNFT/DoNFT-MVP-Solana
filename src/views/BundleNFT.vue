@@ -101,7 +101,7 @@ let nftArray = ref([]);
 
 const bundleObj = reactive({
   name: "NFT token 2 title",
-  symbol: "",
+  symbol: "bundle",
   seller_fee_basis_points: 0,
   external_url: "",
   description: "NFT token 2 description",
@@ -124,14 +124,6 @@ const bundleObj = reactive({
   collection: null,
   use: null
 });
-
-// const nftObj = reactive({
-//   metadata: {
-//     title: "NFT token 2 title",
-//     description: "NFT token 2 description",
-//     media: null,
-//   }
-// });
 
 const getStatus = computed({
   get() {

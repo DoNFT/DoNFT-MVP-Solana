@@ -48,10 +48,20 @@ export async function applyNFTsEffect (effectData) {
   let result = null;
 
   try {
-    result = await api.post("/effects/applyEffect", effectData);
+    result = await api.post("/effects/applyEffect", effectData, {responseType: "blob"});
   } catch(err) {
     console.log(err, "error applyNFTsEffect");
   }
+  
+  const bundleImageTempURL = URL.createObjectURL(result.data);
+  console.log(bundleImageTempURL, "bundleImageTempURL");
+  let cid = null;
 
-  return result ? result.data : null;
+  console.log(result.headers.contenturl, "result.headers.contenturl APPLY NFT EFFECT");
+  if (result) {
+    cid = `https://ipfs.io/${result.headers.contenturl.replace(":/", "")}`;
+  }
+  console.log(cid, "CID APPLY NFT EFFECT");
+
+  return cid ? { cid, hashBlob: bundleImageTempURL } : null;
 }
