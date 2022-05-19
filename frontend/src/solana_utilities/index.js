@@ -64,7 +64,7 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
     const cid = await uploadtoIPFS(meta.image);
     let executedCID = CID_RE.exec(cid)?.[0];
     console.log(`https://ipfs.io/ipfs/${executedCID}`, "------------CID---------------");
-    imageCID = `https://ipfs.io/ipfs/${executedCID}`;
+    imageCID = `https://ipfs.io/ipfs/${executedCID}/file`;
   }
 
   // let meta = JSON.parse(JSON.stringify(oldMeta));
@@ -95,7 +95,9 @@ export async function getImageForTokenByURI(ipfsInstance, imageAddress, getIPFSu
   if (imageAddress) {
     if (imageAddress.startsWith("ipfs") || imageAddress.startsWith("https://ipfs"))  {
       let cid = CID_RE.exec(imageAddress)?.[0];
+
       let localImageURL = await getDataFromIPFS(ipfsInstance, cid, getIPFSurl);
+
       image = localImageURL;
     } else {
       image = imageAddress;
@@ -132,7 +134,14 @@ async function getDataFromIPFS(ipfsInstance, cid, getIPFSurl) {
         image: null,
       };
 
-      data.image = await getImageFromIpfs(ipfsInstance, cid);
+      // nft.storage return images with /file in the end
+      // server on apply effect return image without /file
+      // possibly will be fixed later
+      if (tokenData.image.endsWith("/file")) {
+        data.image = await getImageFromIpfs(ipfsInstance, `${cid}/file`);
+      } else {
+        data.image = await getImageFromIpfs(ipfsInstance, cid);
+      }
 
       return data;
     } else {
