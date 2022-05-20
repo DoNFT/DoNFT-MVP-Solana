@@ -144,6 +144,7 @@ const createNewNFT = async () => {
       uri: getNFTdeployResult.value,
       maxSupply: 1
     });
+    store.dispatch("setStatus", StatusType.Minting);
     const response = await connection.confirmTransaction(signature.txId, "finalized");
     console.log(signature.mint.toString(), "signature mint");
 
@@ -174,7 +175,6 @@ const createNewNFT = async () => {
 
 const getStatusText = (status) => {
   const statusData = statusMixin(status);
-  console.log(statusData, "statusData");
 
   return statusData.statusText;
 };

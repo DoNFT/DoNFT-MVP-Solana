@@ -11,8 +11,6 @@
     "@kyvg/vue3-notification": "^2.3.4",
     "@metaplex/js": "^4.12.0",
     "@nfteyez/sol-rayz": "^0.10.2",
-    "@project-serum/sol-wallet-adapter": "^0.2.6",
-    "@solana/buffer-layout": "^4.0.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/wallet-adapter-wallets": "^0.15.5",
     "@solana/web3.js": "1.32.0",
@@ -43,49 +41,7 @@
     "sass-loader": "^12.0.0",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
-    "svg-sprite-loader": "^6.0.11",
-    "svgo-loader": "^3.0.0",
-    "util": "^0.12.4",
-    "vue-svg-loader": "^0.17.0-beta.2"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "browser": true,
-      "es2020": true,
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/vue3-essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {
-      "indent": [
-        2,
-        2
-      ],
-      "semi": [
-        2,
-        "always"
-      ],
-      "quotes": [
-        2,
-        "double",
-        {
-          "avoidEscape": true
-        }
-      ],
-      "vue/html-indent": [
-        "error",
-        2,
-        {
-          "alignAttributesVertically": true
-        }
-      ]
-    }
+    "util": "^0.12.4"
   },
   "browserslist": [
     "> 1%",

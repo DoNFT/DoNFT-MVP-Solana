@@ -4,9 +4,6 @@ const { defineConfig } = require("@vue/cli-service");
 // problem: https://stackoverflow.com/questions/64402821/module-not-found-error-cant-resolve-util-in-webpack
 module.exports = defineConfig({
   transpileDependencies: true,
-  chainWebpack: config => {
-    config.module.rules.delete("svg");
-  },
   configureWebpack: {
     resolve: {
       fallback: {
@@ -17,11 +14,5 @@ module.exports = defineConfig({
         http: require.resolve("stream-http")
       }
     },
-    module: {
-      rules: [{
-        test: /\.svg$/,
-        loader: "vue-svg-loader"
-      }]
-    }
   },
 });

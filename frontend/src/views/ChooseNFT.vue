@@ -6,9 +6,15 @@
       @generate-random-nft="generateRandomNFT"
     />
     <div
-      v-if="getLoadingNFTsStatus" class="loading-container"
+      v-if="getLoadingNFTsStatus ||
+        [
+          StatusType.Approving,
+          StatusType.Sending,
+          StatusType.Minting,
+        ].includes(getStatus)" class="loading-container"
     >
       <spinner :size="92" color="#000" />
+      <h2>{{ getStatusText(getStatus) }}</h2>
     </div>
     <main v-else>
       <h1>Choose NFT and apply effect</h1>
@@ -52,11 +58,12 @@ import TokenCard from "@/components/TokenCard/TokenCard";
 import Spinner from "@/components/Spinner";
 import { AppError, SystemErrors } from "@/utilities";
 import { notify } from "@kyvg/vue3-notification";
+import statusMixin from "@/mixins/StatusMixin";
 
 const store = useStore();
 let token_id =  ref([]);
+const { StatusType } = statusMixin();
 
-// todo: change creator to wallet id
 let nftObj = reactive({
   name: "",
   symbol: "test",
@@ -177,11 +184,11 @@ const getSolanaWalletInstance = computed({
   },
 });
 
-// const getStatus = computed({
-//   get() {
-//     return store.getters["getStatus"];
-//   },
-// });
+const getStatus = computed({
+  get() {
+    return store.getters["getStatus"];
+  },
+});
 
 const getSolanaInstance = computed({
   get() {
@@ -237,6 +244,7 @@ const generateRandomNFT = async (nftType) => {
     }
 
     try {
+      store.dispatch("setStatus", StatusType.DeployingToIPFS);
       // is Random, for skipping image ipfs deploy
       await store.dispatch("setDeployToIPFS", { isImageDeployed: true, meta: nftObj });
     } catch(err) {
@@ -249,16 +257,18 @@ const generateRandomNFT = async (nftType) => {
 
     try {
       console.log("CREATING");
+      store.dispatch("setStatus", StatusType.Approving);
       const signature = await actions.mintNFT({
         connection,
         wallet: getSolanaWalletInstance.value,
         uri: getNFTdeployResult.value,
         maxSupply: 1
       });
+      store.dispatch("setStatus", StatusType.Minting);
       const response = await connection.confirmTransaction(signature.txId, "finalized");
       console.log(signature, "CREATING");
       if (response.value && response.value.err === null) {
-        // store.dispatch("setStatus", StatusType.ChoosingParameters);
+        store.dispatch("setStatus", StatusType.ChoosingParameters);
         store.dispatch("setAllSolanaNFts");
         // router.push({ name: "ChooseNFT"});
         notify({
@@ -271,6 +281,7 @@ const generateRandomNFT = async (nftType) => {
 
     } catch(err) {
       console.log(err, "error");
+      store.dispatch("setStatus", StatusType.ChoosingParameters);
       if (err instanceof AppError) {
         throw err; 
       } else {
@@ -278,6 +289,7 @@ const generateRandomNFT = async (nftType) => {
       }
     }
   } catch(err) {
+    store.dispatch("setStatus", StatusType.ChoosingParameters);
     console.log(err, "MAIN ERROR");
     // if(err instanceof AppError) {
     //   alert(err.message)
@@ -304,6 +316,12 @@ const chooseNFT = (item) => {
 
   // this one for bundle page
   store.commit("SET_BUNDLE_NFTS", token_id.value);
+};
+
+const getStatusText = (status) => {
+  const statusData = statusMixin(status);
+
+  return statusData.statusText;
 };
 </script>
 
