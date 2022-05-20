@@ -114,12 +114,7 @@ const bundleObj = reactive({
       }
     ],
     category: "image",
-    creators: [
-      {
-        "address": "3psnJUFeJ4QyHwKjbfycFKrFap9FxHJehAYmMc3ZRBWV",
-        "share": 100
-      }
-    ]
+    creators: []
   },
   collection: null,
   use: null
@@ -190,6 +185,12 @@ onMounted(async ()=> {
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
 
+  // creating nft, require wallet key of creator
+  const defaultCreator = {
+    "address": getSolanaWalletInstance.value.publicKey.toString(),
+    "share": 100
+  };
+  bundleObj.properties.creators.push(defaultCreator);
   console.log(test[0].toString(), "mounted");
 });
 

@@ -45,7 +45,7 @@
 </template>
 <script setup>
 import { actions } from "@metaplex/js";
-import { computed, ref, reactive } from "vue";
+import { computed, ref, reactive, onMounted } from "vue";
 import { useStore } from "vuex";
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
@@ -72,12 +72,7 @@ let nftObj = reactive({
       }
     ],
     category: "image",
-    creators: [
-      {
-        "address": "3psnJUFeJ4QyHwKjbfycFKrFap9FxHJehAYmMc3ZRBWV",
-        "share": 100
-      }
-    ]
+    creators: []
   },
   collection: null,
   use: null
@@ -198,6 +193,16 @@ const getNFTdeployResult = computed({
   get() {
     return store.getters["getNFTdeployResult"];
   },
+});
+
+
+onMounted(() => {
+  // creating nft, require wallet key of creator
+  const defaultCreator = {
+    "address": getSolanaWalletInstance.value.publicKey.toString(),
+    "share": 100
+  };
+  nftObj.properties.creators.push(defaultCreator);
 });
 
 // Creating Random NFT, depend on Math random

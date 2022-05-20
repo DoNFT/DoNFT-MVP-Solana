@@ -78,12 +78,7 @@ const nftObj = reactive({
       }
     ],
     category: "image",
-    creators: [
-      {
-        "address": "3psnJUFeJ4QyHwKjbfycFKrFap9FxHJehAYmMc3ZRBWV",
-        "share": 100
-      }
-    ]
+    creators: []
   },
   collection: null,
   use: null
@@ -118,9 +113,13 @@ const getNFTdeployResult = computed({
   },
 });
 
-onMounted(async () => {
-  console.log(actions, "actions");
-  // console.log(bundleStorageTokenAccountProgram[0].toString(), "bundleStorageTokenAccountProgram");
+onMounted(() => {
+  // creating nft, require wallet key of creator
+  const defaultCreator = {
+    "address": getSolanaWalletInstance.value.publicKey.toString(),
+    "share": 100
+  };
+  nftObj.properties.creators.push(defaultCreator);
 });
 
 const setUploadedImg = (img) => {
