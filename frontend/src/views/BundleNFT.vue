@@ -61,6 +61,7 @@
           StatusType.Approving,
           StatusType.Sending,
           StatusType.Minting,
+          StatusType.DeployingToIPFS,
         ].includes(getStatus)" class="loading-container"
       >
         <spinner :size="92" color="#000" />
@@ -91,7 +92,7 @@ const CONTRACT_PROGRAM_ID = new PublicKey(
   "DyPhsdovhyrTktsJS6nrghGvkRoo2FK3ztH1sKKPBDU4",
 );
 
-const fullAccount = Keypair.fromSecretKey(Uint8Array.from([168,137,178,118,85,0,219,78,149,104,214,158,185,33,196,108,238,183,141,26,35,60,189,245,167,33,237,202,49,205,192,220,41,251,23,23,113,90,97,50,214,88,148,121,99,2,223,81,55,89,151,23,238,43,56,91,242,238,27,97,242,110,125,214]));
+const bundleStorageAccount = Keypair.fromSecretKey(Uint8Array.from([138,133,11,131,247,141,131,185,159,96,109,107,180,236,20,176,63,41,69,76,179,63,201,132,193,76,220,28,143,52,254,215,31,128,60,52,52,212,51,196,74,36,28,61,13,2,210,174,164,102,234,182,74,120,227,153,67,193,173,126,14,38,102,210]));
 
 const { StatusType } = statusMixin();
 const store = useStore();
@@ -174,6 +175,8 @@ onBeforeMount(() => {
 });
 
 onMounted(async ()=> {
+  console.log(getSolanaInstance.value, "getSolanaInstance.value");
+  console.log(getSolanaWalletInstance.value, "getSolanaWalletInstance");
   // const test = getMintInfo(getSolanaInstance.value, new PublicKey("4syogkhaM4kvLEe2TjwbXRSdhw43YC2aGTACWQdfajWj"));
   
   const test = await PublicKey.findProgramAddress(
@@ -201,7 +204,6 @@ const bundleNFTs = async () => {
   try {
     const connection = getSolanaInstance.value;
     const fromWallet = getSolanaWalletInstance.value;
-    // const initializerAccount = new Account(acc_private_key);
 
     const keyWallet = new PublicKey(getSolanaWalletInstance.value.publicKey.toString());
 
@@ -211,10 +213,6 @@ const bundleNFTs = async () => {
       tokensMintKeys.push(new PublicKey(item));
     });
 
-    console.log(tokensMintKeys, "tokensMintKeys");
-
-    console.log(nftArray.value[0], "nftArray.value[0]");
-    console.log(keyWallet, "keyWallet");
 
     // BundleTokenAccounts (1, 2, 3 ...)
     const bundleTokenAccountForMints = await Promise.all(tokensMintKeys.map(async (item) => {
@@ -230,13 +228,11 @@ const bundleNFTs = async () => {
       return token;
     }));
 
+    // requestin mint ID for every Token Account of existing NFT, which gonna be bundled later
     const TokenAccountParsedMint = await Promise.all(bundleTokenAccountForMints.map(async (item) => {
-      console.log(item, "TokenAccountParsedMint");
       const token = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(item[0], "devnet")).value.data.parsed.info.mint);
-      console.log(token.toString(), "token");
       return token;
     }));
-    console.log(TokenAccountParsedMint, "TokenAccountParsedMint-----");
     
     const tempTokenAccounts = [];
 
@@ -244,10 +240,9 @@ const bundleNFTs = async () => {
       tempTokenAccounts.push(new Account);
     }
 
-    console.log(tempTokenAccounts, "tempTokenAccounts------");
-
+    // TOKENS STORAGE
+    // here are accounts, to which we gonna send bundled NFT tokens
     const tempTokenAccountInstruction = await Promise.all(tempTokenAccounts.map(async (item, index) => {
-      console.log(tempTokenAccounts[index].publicKey, index, "tempTokenAccounts[index].publicKey");
       const instruction = SystemProgram.createAccount({
         programId: TOKEN_PROGRAM_ID,
         space: AccountLayout.span,
@@ -256,16 +251,17 @@ const bundleNFTs = async () => {
         newAccountPubkey: tempTokenAccounts[index].publicKey
       });
 
-      console.log(instruction, index, "tempTokenAccounts");
       return instruction;
     }));
-    console.log(tempTokenAccountInstruction, "tempTokenAccountInstruction------");
 
     // TOKENS STORAGE
     store.dispatch("setStatus", StatusType.DeployingToIPFS);
 
     await store.dispatch("setDeployToIPFS", { isImageDeployed: false, meta: bundleObj });
     console.log(getNFTdeployResult, "CREATING");
+
+    store.dispatch("setStatus", StatusType.Approving);
+
     // Block of minting BUNDLE NFT
     const signature = await actions.mintNFT({
       connection,
@@ -286,9 +282,6 @@ const bundleNFTs = async () => {
       CONTRACT_PROGRAM_ID
     );
 
-    // account for creating program with seed
-    const bundleStorageAccount = Keypair.fromSecretKey(Uint8Array.from([138,133,11,131,247,141,131,185,159,96,109,107,180,236,20,176,63,41,69,76,179,63,201,132,193,76,220,28,143,52,254,215,31,128,60,52,52,212,51,196,74,36,28,61,13,2,210,174,164,102,234,182,74,120,227,153,67,193,173,126,14,38,102,210]));
-    
     // creating account with seed
     // seed gonna help us to find bundle inner NFT later
     const seed = signature.mint.toString().substr(0, 20);
@@ -300,7 +293,9 @@ const bundleNFTs = async () => {
     );
 
     store.dispatch("setStatus", StatusType.Approving);
+
     // todo: SET AUTHORITY for BUNDLE NFT, isMutable property in metadata of token
+    // its need for making BUNDLE NFT unmutable, or user will have a chance to change BUNDLE NFT
 
     // const bundleMintAuthority = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(signature.mint, "devnet")).value.data.parsed.info.mintAuthority);
     // const setBundleAuthorityTransaction = Token.createSetAuthorityInstruction(
@@ -325,17 +320,9 @@ const bundleNFTs = async () => {
       space: 1 + 32 + 4 + (32 * TokenAccountParsedMint.length),
     });
 
-    console.log(bundleStorageTokenAccountIx, "bundleStorageTokenAccountIx");
-
-
-    console.log(bundleStorageTokenAccountIx.keys[0].pubkey.toString(), "bundleStorageTokenAccountIx toString 0");
-    console.log(bundleStorageTokenAccountIx.keys[1].pubkey.toString(), "bundleStorageTokenAccountIx toString 1");
-    // console.log(bundleStorageTokenAccountIx.keys[2].pubkey.toString(), "bundleStorageTokenAccountIx toString 2");
-
 
     // creating program accounts for every inner NFT of bundle
     const programsAccountForMint = await Promise.all(tempTokenAccounts.map(async (item, index) => {
-      console.log(tempTokenAccounts[index].publicKey, index, "tempTokenAccounts[index].publicKey");
       const instruction = Token.createInitAccountInstruction(
         TOKEN_PROGRAM_ID,
         TokenAccountParsedMint[index],
@@ -343,15 +330,11 @@ const bundleNFTs = async () => {
         bundleStorageTokenAccountProgram[0]
       );
 
-      console.log(instruction, "tempTokenAccounts");
       return instruction;
     }));
 
-    console.log(programsAccountForMint, "programsAccountForMint-----");
 
-    console.log(signature, "signature mint");
-    console.log(signature.mint.toString(), "signature mint");
-
+    // here is Token Account for Bundle Front NFT, which gonna contain NFTs
     const superNFTTokenAccount = await PublicKey.findProgramAddress(
       [
         fromWallet.publicKey.toBuffer(),
@@ -363,6 +346,8 @@ const bundleNFTs = async () => {
 
     const bundleTokensSorted = [];
 
+    // sorting tokens which gonna be BUNDLED
+    // order is very important, transaction will fail if its wrong
     bundleTokenAccountForMints.forEach((tokenAcc, index) => {
       const nftTokenAcc = {
         pubkey: tokenAcc[0],
@@ -382,6 +367,35 @@ const bundleNFTs = async () => {
 
     console.log(bundleTokensSorted, "bundleTokensSorted------");
 
+
+    const latestBlockHash1 = await connection.getLatestBlockhash();
+
+    // Init of main transactions, which gonna prepare for us empty accounts on Solana chain
+    // after initing this account, we can init main Transaction, which gonna bundle NFTs
+    // also there is 1295 bytes size Transaction restriction, because of this
+    // we had to separate initBundleTx Transaction from others, or size gonna be larger than 1295 bytes
+    const tx = new Transaction({
+      feePayer: keyWallet,
+      recentBlockhash: latestBlockHash1.blockhash,
+    });
+
+    tx.add(
+      ...tempTokenAccountInstruction,
+      ...programsAccountForMint,
+      bundleStorageTokenAccountIx,
+    );
+    
+    // signing tempTokenAccountInstruction, programsAccountForMint and bundleStorageTokenAccountIx
+    tx.sign(...tempTokenAccounts, bundleStorageAccount);
+    
+    // also we should sign with Phantom wallet, it gonna ask user to approve
+    await getSolanaWalletInstance.value.signTransaction(tx);
+  
+    // sending all of it as bytes, and confirm then
+    const accountsCreateTx = await connection.sendRawTransaction(tx.serialize());
+    await connection.confirmTransaction(accountsCreateTx, "processed");
+
+    // creating Transaction keys for initBundleTx
     const keys =  [
       { pubkey: keyWallet, isSigner: true, isWritable: false },
       { pubkey: signature.mint, isSigner: false, isWritable: false },
@@ -397,48 +411,31 @@ const bundleNFTs = async () => {
     // data: [0, 254]
     console.log(bundle_instruction_data, "bundle_instruction_data.mint");
 
-    const initEscrowIx = new TransactionInstruction({
+    // passing all data to Instruction, which gonna bundle all NFTs
+    const initBundleTx = new TransactionInstruction({
       programId: CONTRACT_PROGRAM_ID,
       keys,
       data: Buffer.from(bundle_instruction_data)
     });
-    console.log(initEscrowIx, "initEscrowIx.mint");
 
+    const latestBlockHash2 = await connection.getLatestBlockhash();
+    const tx2 = new Transaction({
+      feePayer: keyWallet,
+      recentBlockhash: latestBlockHash2.blockhash,
+    }).add(
+      initBundleTx,
+    );
+
+    await getSolanaWalletInstance.value.signTransaction(tx2);
     store.dispatch("setStatus", StatusType.Sending);
-    const tx = new Transaction()
-      .add(
-        ...tempTokenAccountInstruction,
-        ...programsAccountForMint,
-      );
-    console.log("tx 1", tx);
-    console.log(bundleStorageAccount.publicKey.toString(), "bundleStorageAccount.mint");
-    const sendTx = await connection.sendTransaction(tx, [
-      fullAccount,
-      ...tempTokenAccounts,
-    ], {skipPreflight: false, preflightCommitment: "singleGossip"});
 
-    const response3 = await connection.confirmTransaction(sendTx, "finalized");
-    console.log("response3", response3);
-    console.log("signature 1", sendTx);
-    const tx2 = new Transaction()
-      .add(
-        bundleStorageTokenAccountIx,
-        initEscrowIx,
-      );
+    const sendBundleTx = await connection.sendRawTransaction(tx2.serialize());
 
-    const sendTx2 = await connection.sendTransaction(tx2, [
-      fullAccount,
-      bundleStorageAccount,
-    ], {skipPreflight: false, preflightCommitment: "singleGossip"});
+    // awaiting result, if no error, its completed
+    const sendBundleTxResponse = await connection.confirmTransaction(sendBundleTx, "processed");
+    console.log("sendBundleTxResponse", sendBundleTxResponse);
 
-    const response4 = await connection.confirmTransaction(sendTx2, "processed");
-    console.log("response4444442", response4);
-    console.log("signature 2", sendTx2);
-    // store.dispatch("setStatus", StatusType.Minting);
-    // const response = await connection.confirmTransaction(signature.txId, "processed");
-    // console.log("response signature 2", response);
-
-    if (response3.value && response3.value.err === null) {
+    if (sendBundleTxResponse.value && sendBundleTxResponse.value.err === null) {
       store.dispatch("setAllSolanaNFts");
       router.push({ name: "ChooseNFT"});
       notify({

@@ -88,7 +88,6 @@ const CONTRACT_PROGRAM_ID = new PublicKey(
   "DyPhsdovhyrTktsJS6nrghGvkRoo2FK3ztH1sKKPBDU4",
 );
 
-const fullAccount = Keypair.fromSecretKey(Uint8Array.from([168,137,178,118,85,0,219,78,149,104,214,158,185,33,196,108,238,183,141,26,35,60,189,245,167,33,237,202,49,205,192,220,41,251,23,23,113,90,97,50,214,88,148,121,99,2,223,81,55,89,151,23,238,43,56,91,242,238,27,97,242,110,125,214]));
 const uintSeed = Uint8Array.from([138,133,11,131,247,141,131,185,159,96,109,107,180,236,20,176,63,41,69,76,179,63,201,132,193,76,220,28,143,52,254,215,31,128,60,52,52,212,51,196,74,36,28,61,13,2,210,174,164,102,234,182,74,120,227,153,67,193,173,126,14,38,102,210]);
 
 let nftObj = reactive({
@@ -352,13 +351,6 @@ const handleMint = async () => {
         space: 101,
       });
 
-      console.log(bundleStorageTokenAccountIx, "bundleStorageTokenAccountIx");
-
-
-      console.log(bundleStorageTokenAccountIx.keys[0].pubkey.toString(), "bundleStorageTokenAccountIx toString 0");
-      console.log(bundleStorageTokenAccountIx.keys[1].pubkey.toString(), "bundleStorageTokenAccountIx toString 1");
-      // console.log(bundleStorageTokenAccountIx.keys[2].pubkey.toString(), "bundleStorageTokenAccountIx toString 2");
-
       // creating instruction for 1st NFT Token Account
       const programs_account_for_mint1 = Token.createInitAccountInstruction(
         TOKEN_PROGRAM_ID,
@@ -414,39 +406,45 @@ const handleMint = async () => {
         keys,
         data: Buffer.from(bundle_instruction_data)
       });
-      console.log(initEscrowIx, "initEscrowIx.mint");
+
+      const latestBlockHash1 = await connection.getLatestBlockhash();
 
       // every transaction which creating smth
       // require full account with public key and private key
       // as createTempTokenAccount1/programs_account_for_mint1 require tempTokenAccount1
-      const tx = new Transaction()
-        .add(
-          createTempTokenAccount1,
-          createTempTokenAccount2,
-          programs_account_for_mint1,
-          programs_account_for_mint2,
-          bundleStorageTokenAccountIx,
-          initEscrowIx,
-        );
+      const tx = new Transaction({
+        feePayer: keyWallet,
+        recentBlockhash: latestBlockHash1.blockhash,
+      });
+
+      tx.add(
+        createTempTokenAccount1,
+        createTempTokenAccount2,
+        programs_account_for_mint1,
+        programs_account_for_mint2,
+        bundleStorageTokenAccountIx,
+        initEscrowIx,
+      );
       console.log("tx 1", tx);
 
-      const sendTx = await connection.sendTransaction(tx, [
-        fullAccount,
-        tempTokenAccount1,
-        tempTokenAccount2,
-        bundleStorageAccount,
-      ], {skipPreflight: false, preflightCommitment: "singleGossip"});
-      const response3 = await connection.confirmTransaction(sendTx, "processed");
-      console.log("signature 1", sendTx);
-      console.log("response3", response3);
+      // signing tempTokenAccountInstruction, programsAccountForMint and bundleStorageTokenAccountIx
+      tx.sign(tempTokenAccount1, tempTokenAccount2, bundleStorageAccount);
+      // also we should sign with Phantom wallet, it gonna ask user to approve
+      await getSolanaWalletInstance.value.signTransaction(tx);
+      // sending all of it as bytes, and confirm then
+      const accountsCreateTx = await connection.sendRawTransaction(tx.serialize());
+      const accountsCreateTxResponse = await connection.confirmTransaction(accountsCreateTx, "processed");
+      console.log("signature 1", accountsCreateTx);
+      console.log("response3", accountsCreateTxResponse);
       store.dispatch("setStatus", StatusType.Minting);
 
       // if response contain EMPTY ERROR, its Successed
-      if (response3.value && response3.value.err === null) {
+      if (accountsCreateTxResponse.value && accountsCreateTxResponse.value.err === null) {
         store.dispatch("setStatus", StatusType.ChoosingParameters);
 
+        // adding bundle obj, to display it without waiting ipfs
         const bundleObj = {
-          mint: signature.mint,
+          mint: signature.mint.toString(),
           data: {
             ...nftObj,
             image: blobImg.value

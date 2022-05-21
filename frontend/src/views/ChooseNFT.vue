@@ -11,6 +11,7 @@
           StatusType.Approving,
           StatusType.Sending,
           StatusType.Minting,
+          StatusType.DeployingToIPFS,
         ].includes(getStatus)" class="loading-container"
     >
       <spinner :size="92" color="#000" />
@@ -116,14 +117,30 @@ const filteredNFTbyContract = computed({
       const nftContract = [];
       const effectContract = [];
       const bundleContract = [];
+      const otherContract = [];
 
       getAllNFTs.value.forEach((item) => {
-        if (item.data.symbol === "nft") nftContract.push(item);
-        if (item.data.symbol === "effect") effectContract.push(item);
-        if (item.data.symbol === "bundle") bundleContract.push(item);
+        if (item.data.symbol === "nft") {
+          return nftContract.push(item);
+        }
+        if (item.data.symbol === "effect") {
+          effectContract.push(item);
+          return;
+        }
+        if (item.data.symbol === "bundle") {
+          bundleContract.push(item);
+          return;
+        }
+
+        otherContract.push(item);
       });
 
-      return [{ name: "nft",  items: nftContract }, { name: "effect", items: effectContract }, { name: "bundle", items: bundleContract }];
+      return [
+        { name: "nft",  items: nftContract },
+        { name: "effect", items: effectContract },
+        { name: "bundle", items: bundleContract },
+        { name: "other", items: otherContract },
+      ];
     }
 
     return [];
@@ -312,7 +329,7 @@ const chooseNFT = (item) => {
   }
 
   // this one for single actions, send or effects page
-  token_id.value && token_id.value.length === 1 ? store.dispatch("setCurrentNFTdata", item) : store.dispatch("setCurrentNFTdata", {});
+  token_id.value && token_id.value.length === 1 ? store.commit("SET_CURRENT_NFT", item) : store.commit("SET_CURRENT_NFT", {});
 
   // this one for bundle page
   store.commit("SET_BUNDLE_NFTS", token_id.value);

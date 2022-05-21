@@ -32,7 +32,7 @@ const router = useRouter();
 watch(() => connected.value, () => {
   console.log(connected.value, "DISCONNECTED!");
   if (connected.value === false) {
-    store.dispatch("setWalletDisconnected");
+    store.commit("SET_WALLET_DISCONNECTED");
     router.push({ name: "LoginView" });
   }
 });

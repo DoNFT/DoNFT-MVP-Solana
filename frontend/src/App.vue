@@ -57,7 +57,7 @@ watch(() => getWalletError.value, () => {
   console.log(getWalletError.value, connected.value, "watch getWalletError");
   if (getWalletError.value === true && connected.value === false) {
     router.push({ name: "LoginView" });
-    store.dispatch("setWalletError", false);
+    store.commit("SET_WALLET_ERROR", false);
   }
 });
 
@@ -66,7 +66,7 @@ watch(() => connected.value, () => {
   console.log(connecting.value, "connecting vue!");
   console.log(route.value, "route vue!");
   if (connected.value === false) {
-    store.dispatch("setWalletDisconnected");
+    store.commit("SET_WALLET_DISCONNECTED");
     router.push({ name: "LoginView" });
   }
 
@@ -75,13 +75,13 @@ watch(() => connected.value, () => {
   // getting list of NFTs
   // cause connected unavailable in MOUNTED hook
   if (connected.value === true && getAllNFTs.value && getAllNFTs.value.length === 0) {
-    store.dispatch("setSolanaInstance", connection);
-    store.dispatch("setSolanaWalletInstance", wallet.value);
+    store.commit("SET_SOLANA_INSTANCE", connection);
+    store.commit("SET_CURRENT_WALLET", wallet.value);
     store.dispatch("setAllSolanaNFts");
   }
 
   if (route.value.name === "LoginView" && (connecting.value || connected.value)) {
-    store.dispatch("setConnected", publicKey.toString());
+    store.commit("SET_CONNECTED", publicKey.toString());
     router.push({ name: "ChooseNFT" });
   }
 });

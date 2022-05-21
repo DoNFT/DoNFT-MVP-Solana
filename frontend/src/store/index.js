@@ -117,24 +117,6 @@ export default createStore({
     setStatus ({commit}, status) {
       commit("setStatus", status);
     },
-    setCurrentNFTdata ({commit}, payload) {
-      commit("SET_CURRENT_NFT", payload);
-    },
-    setWalletDisconnected ({commit}) {
-      commit("SET_WALLET_DISCONNECTED");
-    },
-    setConnected({commit}, payload) {
-      commit("SET_CONNECTED", payload);
-    },
-    setSolanaInstance ({commit}, payload) {
-      commit("SET_SOLANA_INSTANCE", payload);
-    },
-    setSolanaWalletInstance ({commit}, payload) {
-      commit("SET_CURRENT_WALLET", payload);
-    },
-    setWalletError ({commit}, payload) {
-      commit("SET_WALLET_ERROR", payload);
-    },
     async setAllSolanaNFts ({commit, getters}) {
       console.log("setAllSolanaNFts");
       commit("SET_LOADING_NFTS", true);

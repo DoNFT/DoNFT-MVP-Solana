@@ -73,7 +73,7 @@ const loadContent = async () => {
 
       // if need extra info for single page, dispatch
       if (props.getInfo) {
-        store.dispatch("setCurrentNFTdata", tokenData);
+        store.commit("SET_CURRENT_NFT", tokenData);
       }
 
       nftImage.value = tokenData ? tokenData.image : null;

@@ -55,6 +55,7 @@
               >Approve NFT</button>
               <button
                 class="main-btn"
+                :disabled="bundleNFTs && !bundleNFTs.length"
                 @click="unbundleNFT"
               >Unbundle NFT</button>
               <router-link
@@ -121,7 +122,6 @@ const CONTRACT_PROGRAM_ID = new PublicKey(
   "DyPhsdovhyrTktsJS6nrghGvkRoo2FK3ztH1sKKPBDU4",
 );
 
-const fullAccount = Keypair.fromSecretKey(Uint8Array.from([168,137,178,118,85,0,219,78,149,104,214,158,185,33,196,108,238,183,141,26,35,60,189,245,167,33,237,202,49,205,192,220,41,251,23,23,113,90,97,50,214,88,148,121,99,2,223,81,55,89,151,23,238,43,56,91,242,238,27,97,242,110,125,214]));
 const bundleStorageAccount = Keypair.fromSecretKey(Uint8Array.from([138,133,11,131,247,141,131,185,159,96,109,107,180,236,20,176,63,41,69,76,179,63,201,132,193,76,220,28,143,52,254,215,31,128,60,52,52,212,51,196,74,36,28,61,13,2,210,174,164,102,234,182,74,120,227,153,67,193,173,126,14,38,102,210]));
 
 const router = useRouter();
@@ -304,7 +304,6 @@ const unbundleNFT = async () => {
     const connection = getSolanaInstance.value;
 
     const fromWallet = getSolanaWalletInstance.value;
-    // const initializerAccount = new Account(acc_private_key);
 
     const keyWallet = new PublicKey(getSolanaWalletInstance.value.publicKey.toString());
 
@@ -354,7 +353,7 @@ const unbundleNFT = async () => {
 
     const vaultPDA = await PublicKey.findProgramAddress(
       [
-        fullAccount.publicKey.toBuffer(),
+        keyWallet.toBuffer(),
       ],
       CONTRACT_PROGRAM_ID
     );
@@ -432,6 +431,7 @@ const unbundleNFT = async () => {
 
     const bundle_instruction_data = [1, bundleStorageTokenAccountProgram[1]];
 
+    const latestBlockHash1 = await connection.getLatestBlockhash();
     const initEscrowIx = new TransactionInstruction({
       programId: CONTRACT_PROGRAM_ID,
       keys,
@@ -440,16 +440,21 @@ const unbundleNFT = async () => {
     console.log(initEscrowIx, "initEscrowIx.mint");
 
     store.dispatch("setStatus", StatusType.Sending);
-    const tx = new Transaction()
-      .add(
-        initEscrowIx,
-        burnTx,
-      );
+    const tx = new Transaction({
+      feePayer: keyWallet,
+      recentBlockhash: latestBlockHash1.blockhash,
+    });
+
+    // bundleStorageTokenAccountIx,
+    // initEscrowIx,
+    tx.add(
+      initEscrowIx,
+      burnTx,
+    );
     console.log("tx 1", tx);
     console.log(bundleStorageAccount.publicKey.toString(), "bundleStorageAccount.mint");
-    const sendTx = await connection.sendTransaction(tx, [
-      fullAccount,
-    ], {skipPreflight: false, preflightCommitment: "singleGossip"});
+    const signed1 = await getSolanaWalletInstance.value.signTransaction(tx);
+    const sendTx = await connection.sendRawTransaction(signed1.serialize());
     const response3 = await connection.confirmTransaction(sendTx, "processed");
     console.log("signature 1", sendTx);
     console.log("response3", response3);
