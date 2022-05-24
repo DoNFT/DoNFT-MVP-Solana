@@ -22,15 +22,18 @@
           </div>
           <div
             class="form-nft-send__inputs"
-            v-if="getCurrentNFT"
           >
-            <span class="form-nft-send__inputs-title">Title</span>
-            <input
-              type="text"
-              placeholder="NFT title"
-              class="input form-nft__input"
-              :value="getCurrentNFT.name"
+            <template
+              v-if="getCurrentNFT"
             >
+              <span class="form-nft-send__inputs-title">Title</span>
+              <input
+                type="text"
+                placeholder="NFT title"
+                class="input form-nft__input"
+                :value="getCurrentNFT.name"
+              >
+            </template>
             <!-- <span class="form-nft-send__inputs-title">Description</span>
             <textarea
               type="text"

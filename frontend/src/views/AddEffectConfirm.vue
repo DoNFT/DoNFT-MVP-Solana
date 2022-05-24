@@ -54,6 +54,7 @@
           StatusType.Approving,
           StatusType.Sending,
           StatusType.Minting,
+          StatusType.DeployingToIPFS,
         ].includes(getStatus)" class="loading-container"
       >
         <spinner :size="92" color="#000" />

@@ -71,7 +71,7 @@ const loadContent = async () => {
       // here is all data about NFT in METAPLEX Version
       tokenData = await store.dispatch("setTokenImage", { token: props.metadata.data, getIPFSurl: false });
 
-      // if need extra info for single page, dispatch
+      // if need extra info for main BUNDLE NFT, on single page, commit
       if (props.getInfo) {
         store.commit("SET_CURRENT_NFT", tokenData);
       }

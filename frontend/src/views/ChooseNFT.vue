@@ -86,6 +86,7 @@ let nftObj = reactive({
   use: null
 });
 
+// preuploaded images for random NFTs
 const randomEffectsArr = [
   "https://bafkreif42p2e7ep5q3kpuoz2dlpxmctwr7unajswe3ibq6fm6rcinvjwk4.ipfs.nftstorage.link/",
   "https://bafkreieqmictg2ujcnsrudnq72mmijb3nelwlpzb7gr7xhn77j2aihzlcu.ipfs.nftstorage.link/",
@@ -218,7 +219,6 @@ const getNFTdeployResult = computed({
     return store.getters["getNFTdeployResult"];
   },
 });
-
 
 onMounted(() => {
   // creating nft, require wallet key of creator

@@ -26,12 +26,17 @@ export async function modifyPicture (objectURL, effectId) {
   return item;
 }
 
-export async function uploadtoIPFS (data) {
+export async function uploadtoIPFS (data, isJSON) {
   let result = null;
   const formData = new FormData();
-  const fetchUrl = await fetch(data);
-  const file = await fetchUrl.blob();
-  formData.append("payload", file); 
+  let file = new Blob([JSON.stringify(data)], {type: "application/json"});
+
+  if (!isJSON) {
+    const fetchUrl = await fetch(data);
+    file = await fetchUrl.blob();
+  }
+
+  formData.append("payload", file);
 
   try {
     result = await api.post("/ipfs/upload",  formData);
@@ -40,7 +45,7 @@ export async function uploadtoIPFS (data) {
     console.log(err, "error modifyPicture");
   }
 
-  return result ? result.data : null;
+  return result ? `https://ipfs.io/${result.data.replace(":/", "")}` : null;
 }
 
 

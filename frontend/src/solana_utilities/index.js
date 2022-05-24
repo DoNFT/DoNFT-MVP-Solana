@@ -1,9 +1,14 @@
 import untar from "js-untar";
 import { CID_RE } from "@/utilities";
 import { uploadtoIPFS } from "@/api";
+import { NFTStorage } from "nft.storage/dist/bundle.esm.min.js";
+const API_KEY = process.env.VUE_APP_NFT_STORAGE_API_KEY;
 
 import { getParsedNftAccountsByOwner } from "@nfteyez/sol-rayz";
 
+const client = new NFTStorage({
+  token: API_KEY,
+});
 
 export async function loadAllNFTs(solanaInstance, walletInstance, commit) {
   try {
@@ -23,33 +28,15 @@ export async function loadAllNFTs(solanaInstance, walletInstance, commit) {
   }
 }
 
-// async function pushImageToIpfs(ipfsInstance, objectURL) {
-//   let cidV1 = "";
-//   try {
-//     let cid = "";
-//     let data = null;
-//     await fetch(objectURL)
-//       .then(res => {
-//         console.log(res, "buffer res");
-//         return res.arrayBuffer();
-//       })
-//       .then(buffer => {
-//         console.log(buffer, "buffer data");
-//         data = new Uint8Array(buffer);
-//       });
-//     cid = await ipfsInstance.add(data);
-//     cidV1 = cid.path;
-//   } catch(err) {
-//     console.log(err, "err pushImageToIpfs");
-//   }
-
-//   return cidV1;
-// }
-
+// todo: add custom mintNFT
+// metaplex library can not read uri as JSON.stringified
 async function pushObjectToIpfs(ipfsInstance, object) {
   let cid = null;
   try {
-    cid = await ipfsInstance.add(JSON.stringify(object));
+    // cid = await uploadtoIPFS(JSON.stringify(object), true);
+    // cid = await ipfsInstance.add(JSON.stringify(object));
+    let file = new Blob([JSON.stringify(object)], {type: "application/json"});
+    cid = await client.storeBlob(file);
   } catch(err) {
     console.log(err, "err pushObjectToIpfs");
   }
@@ -61,11 +48,19 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
   console.log(isImageDeployed, "is RANDOM");
 
   if (!isImageDeployed) {
-    const cid = await uploadtoIPFS(meta.image);
-    let executedCID = CID_RE.exec(cid)?.[0];
-    console.log(`https://ipfs.io/ipfs/${executedCID}`, "------------CID---------------");
-    imageCID = `https://ipfs.io/ipfs/${executedCID}/file`;
+    const cid = await uploadtoIPFS(meta.image, false);
+    console.log(cid, "------------CID---------------");
+    // current type https://ipfs.io/ipfs/{cid}/file
+    imageCID = cid;
   }
+
+  // let formData = null;
+  // const fetchUrl = await fetch(meta.image);
+  // const file = await fetchUrl.blob();
+  // formData = new File([file], "file", { type: "image/png" });
+  // console.log(file, "file");
+  // console.log(formData, "FORMDATA");
+  
 
   // let meta = JSON.parse(JSON.stringify(oldMeta));
   // meta.animation_url = `ipfs://${imageCID}`;
@@ -85,9 +80,10 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
     }
   };
   console.log(uriJSON, "uriJSON");
+  // current type https://ipfs.io/ipfs/{cid}/file
   const metaDataCID = await pushObjectToIpfs(ipfsInstance, uriJSON);
   console.log(metaDataCID, "metaDataCID");
-  return `https://ipfs.io/ipfs/${metaDataCID.path}`;
+  return `https://ipfs.io/ipfs/${metaDataCID}`;
 }
 
 export async function getImageForTokenByURI(ipfsInstance, imageAddress, getIPFSurl) {
