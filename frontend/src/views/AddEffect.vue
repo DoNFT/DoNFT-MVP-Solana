@@ -41,14 +41,6 @@
           @click="handleRedirect(item)"
         >Submit</button>
       </div>
-      <!-- <div v-else>
-        <h1 class="effect-cards-box__no-effect">You have no effects</h1>
-        <h2>Add some effects here</h2>
-        <router-link
-          class="main-btn main-btn--no-effect"
-          :to="{ name: 'CreateNFT'}"
-        >Create Effect</router-link>
-      </div> -->
     </main>
   </div>
 </template>
@@ -67,39 +59,23 @@ const router = useRouter();
 
 const NFTComputedData = computed({
   get() {
-    if (getAllNFTs.value && getAllNFTs.value.length) {
-      console.log(router, "get router");
-      return getAllNFTs.value.find((item) => item.mint === router.currentRoute.value.params.id);
+    if (store.getters.getAllNFTs && store.getters.getAllNFTs.length) {
+      return store.getters.getAllNFTs.find((item) => item.mint === router.currentRoute.value.params.id);
     }
-    console.log(getAllNFTs.value, "get all nFTS");
+
     return null;
   },
 });
 
-const getEffectChoice = computed({
-  get() {
-    return store.getters["getEffectChoice"];
-  },
-});
-
-const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
-});
-
-const getNFTsLoadStatus = computed({
-  get() {
-    return store.getters["getNFTsLoadStatus"];
-  },
-});
+const getNFTsLoadStatus = computed(() => store.getters.getNFTsLoadStatus);
+const getEffectChoice = computed(() => store.getters.getEffectChoice);
 
 const filterEffectsContractCards = computed({
   get() {
-    if (getAllNFTs.value && getAllNFTs.value.length) {
+    if (store.getters.getAllNFTs && store.getters.getAllNFTs.length) {
       const effectContract = [];
 
-      getAllNFTs.value.forEach((item) => {
+      store.getters.getAllNFTs.forEach((item) => {
         if (item.data.symbol === "effect") effectContract.push(item);
       });
 
@@ -107,18 +83,6 @@ const filterEffectsContractCards = computed({
     }
 
     return [];
-  },
-});
-
-const getNav = computed({
-  get() {
-    return [
-      {
-        text: "Back to Gallery",
-        name: "ChooseNFT",
-        params: null,
-      },
-    ];
   },
 });
 
@@ -131,6 +95,7 @@ const handleRedirect = async () => {
     }
   });
 };
+
 const chooseEffect = async (card) => {
   if (getEffectChoice.value && card.mint === getEffectChoice.value) {
     store.commit("SET_EFFECT_CHOICE", null);

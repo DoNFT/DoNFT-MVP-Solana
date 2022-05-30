@@ -52,7 +52,7 @@
 </template>
 <script setup>
 import { actions } from "@metaplex/js";
-import { computed, ref, reactive, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
@@ -62,10 +62,10 @@ import { notify } from "@kyvg/vue3-notification";
 import statusMixin from "@/mixins/StatusMixin";
 
 const store = useStore();
-let token_id =  ref([]);
 const { StatusType } = statusMixin();
+let token_id =  ref([]);
 
-let nftObj = reactive({
+let nftObj = {
   name: "",
   symbol: "test",
   seller_fee_basis_points: 0,
@@ -84,75 +84,15 @@ let nftObj = reactive({
   },
   collection: null,
   use: null
-});
+};
 
-// preuploaded images for random NFTs
-const randomEffectsArr = [
-  "https://bafkreif42p2e7ep5q3kpuoz2dlpxmctwr7unajswe3ibq6fm6rcinvjwk4.ipfs.nftstorage.link/",
-  "https://bafkreieqmictg2ujcnsrudnq72mmijb3nelwlpzb7gr7xhn77j2aihzlcu.ipfs.nftstorage.link/",
-  "https://bafybeifdsj6pzie4vos42oyiou3lyesyefs5uj7uyxlgjqbdmg7msdvvpi.ipfs.nftstorage.link/",
-  "https://bafybeigfhupxt6zjfqykf54whf7pabtugo5l57n6t5k5or66e4sovsdaiu.ipfs.nftstorage.link/",
-  "https://bafybeibe2px7qbklyk4r7d4mxttb3cqwjx46cdjteg6pd55oajbmxxcvfm.ipfs.nftstorage.link/",
-  "https://bafybeidctmnh3y4g4i57b5pltsvslkjjooa64avfyyoj5de25mouf3ct5e.ipfs.nftstorage.link/",
-  "https://bafybeidctmnh3y4g4i57b5pltsvslkjjooa64avfyyoj5de25mouf3ct5e.ipfs.nftstorage.link/",
-];
+const randomNFTArr = store.state.randomNFTArr;
+const randomEffectsArr = store.state.randomEffectsArr;
 
-const randomNFTArr = [
-  "https://bafkreibsgijmp53nwssszihmmq25q4ippdfqm67hplgvnjajyymsngksey.ipfs.nftstorage.link/",
-  "https://bafkreieflpqauetjd52ywpcyqggp66vtnfqhkmthr6ng3yqagk45yltp6q.ipfs.nftstorage.link/",
-  "https://bafkreig3suewzhzunlimmtfhycefv3szqux5qbsrllvovrk7ftv5aifmhu.ipfs.nftstorage.link/",
-  "https://bafkreih6hd4ysjce443cmiuagli5bnog4g6uz2r66xqmyg4d6ufdh3ttmm.ipfs.nftstorage.link/",
-  "https://bafkreibb4ukdluctf3d377i4r627xcn2ydqtl35yulawwa2ty65cysv6vq.ipfs.nftstorage.link/",
-];
-
-
-const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
-});
-
-const filteredNFTbyContract = computed({
-  get() {
-    if (getAllNFTs.value && getAllNFTs.value.length) {
-      const nftContract = [];
-      const effectContract = [];
-      const bundleContract = [];
-      const otherContract = [];
-
-      getAllNFTs.value.forEach((item) => {
-        if (item.data.symbol === "nft") {
-          return nftContract.push(item);
-        }
-        if (item.data.symbol === "effect") {
-          effectContract.push(item);
-          return;
-        }
-        if (item.data.symbol === "bundle") {
-          bundleContract.push(item);
-          return;
-        }
-
-        otherContract.push(item);
-      });
-
-      return [
-        { name: "nft",  items: nftContract },
-        { name: "effect", items: effectContract },
-        { name: "bundle", items: bundleContract },
-        { name: "other", items: otherContract },
-      ];
-    }
-
-    return [];
-  }
-});
-
-const getLoadingNFTsStatus = computed({
-  get() {
-    return store.getters["getLoadingNFTsStatus"];
-  },
-});
+const getAllNFTs = computed(() => store.getters.getAllNFTs);
+const filteredNFTbyContract = computed(() => store.getters.filteredNFTbyContract);
+const getLoadingNFTsStatus = computed(() => store.getters.getLoadingNFTsStatus);
+const getStatus = computed(() => store.getters.getStatus);
 
 
 const cardClass = computed({
@@ -160,8 +100,6 @@ const cardClass = computed({
     return(idx) => token_id.value.indexOf(idx) !== -1;
   },
 });
-
-console.log(token_id.value.length, "token_id.value.length");
 
 const getNav = computed({
   get() {
@@ -196,34 +134,10 @@ const getNav = computed({
   },
 });
 
-const getSolanaWalletInstance = computed({
-  get() {
-    return store.getters["getSolanaWalletInstance"];
-  },
-});
-
-const getStatus = computed({
-  get() {
-    return store.getters["getStatus"];
-  },
-});
-
-const getSolanaInstance = computed({
-  get() {
-    return store.getters["getSolanaInstance"];
-  },
-});
-
-const getNFTdeployResult = computed({
-  get() {
-    return store.getters["getNFTdeployResult"];
-  },
-});
-
 onMounted(() => {
   // creating nft, require wallet key of creator
   const defaultCreator = {
-    "address": getSolanaWalletInstance.value.publicKey.toString(),
+    "address": store.getters.getSolanaWalletInstance.publicKey.toString(),
     "share": 100
   };
   nftObj.properties.creators.push(defaultCreator);
@@ -232,8 +146,9 @@ onMounted(() => {
 // Creating Random NFT, depend on Math random
 // currently only for VUE_APP_NFTS_CONTRACT and VUE_APP_NFTS_EFFECTS_CONTRACT
 const generateRandomNFT = async (nftType) => {
+  const connection = store.getters.getSolanaInstance;
+
   try {
-    const connection = getSolanaInstance.value;
     let randomNumber = Math.floor(Math.random() * 5);
     let randomImage =  randomNFTArr[randomNumber];
 
@@ -273,12 +188,12 @@ const generateRandomNFT = async (nftType) => {
     }
 
     try {
-      console.log("CREATING");
+      console.log(store.getters.getNFTdeployResult, "CREATING");
       store.dispatch("setStatus", StatusType.Approving);
       const signature = await actions.mintNFT({
         connection,
-        wallet: getSolanaWalletInstance.value,
-        uri: getNFTdeployResult.value,
+        wallet: store.getters.getSolanaWalletInstance,
+        uri: store.getters.getNFTdeployResult,
         maxSupply: 1
       });
       store.dispatch("setStatus", StatusType.Minting);
@@ -308,12 +223,22 @@ const generateRandomNFT = async (nftType) => {
   } catch(err) {
     store.dispatch("setStatus", StatusType.ChoosingParameters);
     console.log(err, "MAIN ERROR");
-    // if(err instanceof AppError) {
-    //   alert(err.message)
-    // } else {
-    //   console.log(err)
-    //   alert("Undefined error")
-    // }
+
+    if(err instanceof AppError) {
+      notify({
+        title: "Error",
+        type: "error",
+        text: err,
+        duration: 6000,
+      });
+    } else {
+      notify({
+        title: "Error",
+        type: "error",
+        text: "Undefined error",
+        duration: 6000,
+      });
+    }
   }
 };
 

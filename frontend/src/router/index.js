@@ -129,7 +129,7 @@ const walletOptions = {
         text: errorData.error.message,
         duration: 6000,
       });
-      store.dispatch("setWalletError", true);
+      store.commit("SET_WALLET_ERROR", true);
       store.dispatch("setStatus", StatusType.ChoosingParameters);
     } 
   }

@@ -66,7 +66,7 @@
 
 <script setup>
 import { actions } from "@metaplex/js";
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import Spinner from "@/components/Spinner";
@@ -112,70 +112,27 @@ let nftObj = reactive({
   use: null
 });
 
-let blobImg = ref(null);
-
-const getStatus = computed({
-  get() {
-    return store.getters["getStatus"];
+const getNav = [
+  {
+    text: "Back to Gallery",
+    name: "ChooseNFT",
+    params: null,
   },
-});
+];
 
-const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
-});
+let blobImg = null;
 
-const getNFTsLoadStatus = computed({
-  get() {
-    return store.getters["getNFTsLoadStatus"];
-  },
-});
-
-const getEffect = computed({
-  get() {
-    return store.getters["getEffect"];
-  },
-});
+const getStatus = computed(() => store.getters.getStatus);
+const getNFTsLoadStatus = computed(() => store.getters.getNFTsLoadStatus);
+const getEffect = computed(() => store.getters.getEffect);
 
 const NFTComputedData = computed({
   get() {
-    if (getAllNFTs.value && getAllNFTs.value.length) {
-      console.log(router, "get router");
-      return getAllNFTs.value.find((item) => item.mint === router.currentRoute.value.params.id);
+    if (store.getters.getAllNFTs && store.getters.getAllNFTs.length) {
+      return store.getters.getAllNFTs.find((item) => item.mint === router.currentRoute.value.params.id);
     }
-    console.log(getAllNFTs.value, "get all nFTS");
+
     return null;
-  },
-});
-
-const getNav = computed({
-  get() {
-    return [
-      {
-        text: "Back to Gallery",
-        name: "ChooseNFT",
-        params: null,
-      },
-    ];
-  },
-});
-
-const getSolanaWalletInstance = computed({
-  get() {
-    return store.getters["getSolanaWalletInstance"];
-  },
-});
-
-const getSolanaInstance = computed({
-  get() {
-    return store.getters["getSolanaInstance"];
-  },
-});
-
-const getNFTdeployResult = computed({
-  get() {
-    return store.getters["getNFTdeployResult"];
   },
 });
 
@@ -183,19 +140,18 @@ onMounted(() => {
   store.commit("SET_EFFECT_CHOICE", router.currentRoute.value.params.effectId);
   // creating nft, require wallet key of creator
   const defaultCreator = {
-    "address": getSolanaWalletInstance.value.publicKey.toString(),
+    "address": store.getters.getSolanaWalletInstance.publicKey.toString(),
     "share": 100
   };
   nftObj.properties.creators.push(defaultCreator);
 });
 
 const handleMint = async () => {
-  console.log(getSolanaWalletInstance.value.publicKey, "handleMint");
   if (!nftObj.name) {
     alert("Title field is empty");
   } else {
-    const connection = getSolanaInstance.value;
-    const fromWallet = getSolanaWalletInstance.value;
+    const connection = store.getters.getSolanaInstance;
+    const fromWallet = store.getters.getSolanaWalletInstance;
     const tokenData1 = await store.dispatch("setTokenImage", { token: NFTComputedData.value.data, getIPFSurl: true });
     const tokenData2 = await store.dispatch("setTokenImage", { token: getEffect.value.data, getIPFSurl: true });
     console.log(tokenData1, "tokenData1 CID");
@@ -220,7 +176,7 @@ const handleMint = async () => {
       const cidData = await applyNFTsEffect(effectObj);
       console.log(cidData, "CID");
       nftObj.image = cidData.cid;
-      blobImg.value = cidData.hashBlob;
+      blobImg = cidData.hashBlob;
     } catch(err) {
       console.log(err);
       if (err instanceof AppError) {
@@ -244,73 +200,75 @@ const handleMint = async () => {
     try {
       console.log("CREATING");
 
-      const keyWallet = new PublicKey(getSolanaWalletInstance.value.publicKey.toString());
+      const keyWallet = new PublicKey(fromWallet.publicKey.toString());
 
-      const token1 = new PublicKey(NFTComputedData.value.mint);
-      const token2 = new PublicKey(getEffect.value.mint);
+      const mainToken = new PublicKey(NFTComputedData.value.mint);
+      const effectToken = new PublicKey(getEffect.value.mint);
       console.log(keyWallet, "keyWallet");
 
-      // creating Token Account for token1
-      const BundleTokenAccount1 = await PublicKey.findProgramAddress(
+      // creating Token Account for mainToken
+      const mainNFTtokenAccount = await PublicKey.findProgramAddress(
         [
           fromWallet.publicKey.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          token1.toBuffer(),
+          mainToken.toBuffer(),
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
-      // creating Token Account for token2
-      const BundleTokenAccount2 = await PublicKey.findProgramAddress(
+      // creating Token Account for effectToken
+      const effectNFTtokenAccount = await PublicKey.findProgramAddress(
         [
           fromWallet.publicKey.toBuffer(),
           TOKEN_PROGRAM_ID.toBuffer(),
-          token2.toBuffer(),
+          effectToken.toBuffer(),
         ],
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
-      console.log(BundleTokenAccount2[0].toString(), "BundleTokenAccount1");
+      console.log(mainNFTtokenAccount[0].toString(), "BundleTokenAccount1");
 
       // getting token Account mint addres for both tokens
-      const TokenMintAccountPubkey1 = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(BundleTokenAccount1[0], "devnet")).value.data.parsed.info.mint);
-      const TokenMintAccountPubkey2 = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(BundleTokenAccount2[0], "devnet")).value.data.parsed.info.mint);
+      const tokenMintAccountForMainNFT = new PublicKey((await connection.getParsedAccountInfo(mainNFTtokenAccount[0], "devnet")).value.data.parsed.info.mint);
+      const tokenMintAccountForEffect = new PublicKey((await connection.getParsedAccountInfo(effectNFTtokenAccount[0], "devnet")).value.data.parsed.info.mint);
 
-      const tempTokenAccount1 = new Account();
-      const tempTokenAccount2 = new Account();
+      // just an empty account instance
+      const tokenAccountInstanceForMainNFT = new Account();
+      const tokenAccountInstanceForEffect = new Account();
 
       // TOKENS STORAGE
       // here is accounts, to which we gonna send bundled NFT tokens
       // for first token
-      const createTempTokenAccount1 = SystemProgram.createAccount({
+      const tempTokenAccForMainNFT = SystemProgram.createAccount({
         programId: TOKEN_PROGRAM_ID,
         space: AccountLayout.span,
-        lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
+        lamports: await connection.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
         fromPubkey: keyWallet,
-        newAccountPubkey: tempTokenAccount1.publicKey
+        newAccountPubkey: tokenAccountInstanceForMainNFT.publicKey
       });
 
       // for second token
-      const createTempTokenAccount2 = SystemProgram.createAccount({
+      const tempTokenAccForEffectNFT = SystemProgram.createAccount({
         programId: TOKEN_PROGRAM_ID,
         space: AccountLayout.span,
-        lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
+        lamports: await connection.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
         fromPubkey: keyWallet,
-        newAccountPubkey: tempTokenAccount2.publicKey
+        newAccountPubkey: tokenAccountInstanceForEffect.publicKey
       });
 
 
       store.dispatch("setStatus", StatusType.DeployingToIPFS);
       await store.dispatch("setDeployToIPFS", { isImageDeployed: true, meta: nftObj });
       
+      // if need some test data
       //"https://ipfs.io/ipfs/Qmb8yTr9CRhFzTwasPCgXAtLHrfhmNw6i4raJZHr82hzUs"
 
-      console.log(getNFTdeployResult, "CREATING");
+      console.log(store.getters.getNFTdeployResult, "CREATING");
 
       // minting MAIN Bundle NFT
       const signature = await actions.mintNFT({
         connection,
-        wallet: getSolanaWalletInstance.value,
-        uri: getNFTdeployResult.value,
+        wallet: fromWallet,
+        uri: store.getters.getNFTdeployResult,
         maxSupply: 1,
       });
 
@@ -345,7 +303,7 @@ const handleMint = async () => {
       const bundleStorageTokenAccountIx = SystemProgram.createAccountWithSeed({
         basePubkey: bundleStorageAccount.publicKey,
         fromPubkey: keyWallet,
-        lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
+        lamports: await connection.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
         newAccountPubkey: transferAcc,
         programId: CONTRACT_PROGRAM_ID,
         seed,
@@ -353,18 +311,18 @@ const handleMint = async () => {
       });
 
       // creating instruction for 1st NFT Token Account
-      const programs_account_for_mint1 = Token.createInitAccountInstruction(
+      const programAccForMainNFT = Token.createInitAccountInstruction(
         TOKEN_PROGRAM_ID,
-        TokenMintAccountPubkey1,
-        tempTokenAccount1.publicKey,
+        tokenMintAccountForMainNFT,
+        tokenAccountInstanceForMainNFT.publicKey,
         bundleStorageTokenAccountProgram[0]
       );
 
       // creating instruction for 2nd NFT Token Account
-      const programs_account_for_mint2 = Token.createInitAccountInstruction(
+      const programAccForEffect = Token.createInitAccountInstruction(
         TOKEN_PROGRAM_ID,
-        TokenMintAccountPubkey2,
-        tempTokenAccount2.publicKey,
+        tokenMintAccountForEffect,
+        tokenAccountInstanceForEffect.publicKey,
         bundleStorageTokenAccountProgram[0]
       );
       console.log(signature, "signature mint");
@@ -387,10 +345,10 @@ const handleMint = async () => {
         { pubkey: superNFTTokenAccount[0], isSigner: false, isWritable: false },
         { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
         { pubkey: bundleStorageTokenAccountIx.keys[1].pubkey, isSigner: false, isWritable: true },
-        { pubkey: BundleTokenAccount1[0], isSigner: false, isWritable: true },
-        { pubkey: programs_account_for_mint1.keys[0].pubkey, isSigner: false, isWritable: true },
-        { pubkey: BundleTokenAccount2[0], isSigner: false, isWritable: true },
-        { pubkey: programs_account_for_mint2.keys[0].pubkey, isSigner: false, isWritable: true },
+        { pubkey: mainNFTtokenAccount[0], isSigner: false, isWritable: true },
+        { pubkey: programAccForMainNFT.keys[0].pubkey, isSigner: false, isWritable: true },
+        { pubkey: effectNFTtokenAccount[0], isSigner: false, isWritable: true },
+        { pubkey: programAccForEffect.keys[0].pubkey, isSigner: false, isWritable: true },
       ];
 
       // instruction data define WHAT WE DO
@@ -408,35 +366,35 @@ const handleMint = async () => {
         data: Buffer.from(bundle_instruction_data)
       });
 
-      const latestBlockHash1 = await connection.getLatestBlockhash();
+      const latestBlockHash = await connection.getLatestBlockhash();
 
       // every transaction which creating smth
       // require full account with public key and private key
       // as createTempTokenAccount1/programs_account_for_mint1 require tempTokenAccount1
       const tx = new Transaction({
         feePayer: keyWallet,
-        recentBlockhash: latestBlockHash1.blockhash,
+        recentBlockhash: latestBlockHash.blockhash,
       });
 
       tx.add(
-        createTempTokenAccount1,
-        createTempTokenAccount2,
-        programs_account_for_mint1,
-        programs_account_for_mint2,
+        tempTokenAccForMainNFT,
+        tempTokenAccForEffectNFT,
+        programAccForMainNFT,
+        programAccForEffect,
         bundleStorageTokenAccountIx,
         initEscrowIx,
       );
       console.log("tx 1", tx);
 
       // signing tempTokenAccountInstruction, programsAccountForMint and bundleStorageTokenAccountIx
-      tx.sign(tempTokenAccount1, tempTokenAccount2, bundleStorageAccount);
+      tx.sign(tokenAccountInstanceForMainNFT, tokenAccountInstanceForEffect, bundleStorageAccount);
       // also we should sign with Phantom wallet, it gonna ask user to approve
-      await getSolanaWalletInstance.value.signTransaction(tx);
+      await fromWallet.signTransaction(tx);
       // sending all of it as bytes, and confirm then
       const accountsCreateTx = await connection.sendRawTransaction(tx.serialize());
       const accountsCreateTxResponse = await connection.confirmTransaction(accountsCreateTx, "processed");
       console.log("signature 1", accountsCreateTx);
-      console.log("response3", accountsCreateTxResponse);
+      console.log("response", accountsCreateTxResponse);
       store.dispatch("setStatus", StatusType.Minting);
 
       // if response contain EMPTY ERROR, its Successed
@@ -448,14 +406,14 @@ const handleMint = async () => {
           mint: signature.mint.toString(),
           data: {
             ...nftObj,
-            image: blobImg.value
+            image: blobImg
           }
         };
 
         // updating NFTS list in store
         store.commit("ADD_MINTED_NFT", bundleObj);
-        store.commit("REMOVE_FROM_NFT_LIST", token1.toString());
-        store.commit("REMOVE_FROM_NFT_LIST", token2.toString());
+        store.commit("REMOVE_FROM_NFT_LIST", mainToken.toString());
+        store.commit("REMOVE_FROM_NFT_LIST", effectToken.toString());
 
 
         router.push({ name: "ChooseNFT"});
@@ -471,16 +429,20 @@ const handleMint = async () => {
       console.log(err, "error");
       console.log(err, "ERROR BUNDLE");
       store.dispatch("setStatus", StatusType.ChoosingParameters);
-      notify({
-        title: "Transaction status",
-        type: "error",
-        text: `Something wrong, Error: ${err}`,
-        duration: 6000,
-      });
-      if (err instanceof AppError) {
-        throw err; 
+      if(err instanceof AppError) {
+        notify({
+          title: "Error",
+          type: "error",
+          text: err,
+          duration: 6000,
+        });
       } else {
-        throw SystemErrors.MINT_NFT;
+        notify({
+          title: "Error",
+          type: "error",
+          text: "Undefined error",
+          duration: 6000,
+        });
       }
     }
   }

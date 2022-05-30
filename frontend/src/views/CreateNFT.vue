@@ -58,6 +58,7 @@ import { notify } from "@kyvg/vue3-notification";
 import NavBar from "@/components/NavBar/NavBar";
 import UploaderComp from "@/components/Uploader/UploaderComp";
 import Spinner from "@/components/Spinner";
+import { AppError } from "@/utilities";
 
 const store = useStore();
 const router = useRouter();
@@ -89,34 +90,12 @@ const getNavigation = [{
   name: "ChooseNFT",
 }];
 
-const getSolanaWalletInstance = computed({
-  get() {
-    return store.getters["getSolanaWalletInstance"];
-  },
-});
-
-const getStatus = computed({
-  get() {
-    return store.getters["getStatus"];
-  },
-});
-
-const getSolanaInstance = computed({
-  get() {
-    return store.getters["getSolanaInstance"];
-  },
-});
-
-const getNFTdeployResult = computed({
-  get() {
-    return store.getters["getNFTdeployResult"];
-  },
-});
+const getStatus = computed(() => store.getters.getStatus);
 
 onMounted(() => {
   // creating nft, require wallet key of creator
   const defaultCreator = {
-    "address": getSolanaWalletInstance.value.publicKey.toString(),
+    "address": store.getters.getSolanaWalletInstance.publicKey.toString(),
     "share": 100
   };
   nftObj.properties.creators.push(defaultCreator);
@@ -131,17 +110,18 @@ const setUploadedImg = (img) => {
 const createNewNFT = async () => {
   console.log(nftObj, "NFT OBJ");
   try {
-    const connection = getSolanaInstance.value;
+    const connection = store.getters.getSolanaInstance;
+    const fromWallet = store.getters.getSolanaWalletInstance;
 
     store.dispatch("setStatus", StatusType.DeployingToIPFS);
     await store.dispatch("setDeployToIPFS", { isImageDeployed: false, meta: nftObj });
 
     store.dispatch("setStatus", StatusType.Approving);
-    console.log(getNFTdeployResult, "CREATING");
+    console.log(store.getters.getNFTdeployResult, "CREATING");
     const signature = await actions.mintNFT({
       connection,
-      wallet: getSolanaWalletInstance.value,
-      uri: getNFTdeployResult.value,
+      wallet: fromWallet,
+      uri: store.getters.getNFTdeployResult,
       maxSupply: 1
     });
     store.dispatch("setStatus", StatusType.Minting);
@@ -164,12 +144,22 @@ const createNewNFT = async () => {
   } catch(err) {
     console.log(err, "ERRROR createNewNFT");
     store.dispatch("setStatus", StatusType.ChoosingParameters);
-    notify({
-      title: "Transaction status",
-      type: "error",
-      text: `Something wrong, Error: ${err}`,
-      duration: 6000,
-    });
+
+    if(err instanceof AppError) {
+      notify({
+        title: "Error",
+        type: "error",
+        text: err,
+        duration: 6000,
+      });
+    } else {
+      notify({
+        title: "Error",
+        type: "error",
+        text: "Undefined error",
+        duration: 6000,
+      });
+    }
   }
 };
 

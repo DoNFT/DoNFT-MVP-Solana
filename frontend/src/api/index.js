@@ -7,25 +7,6 @@ const api  = axios.create({
 
 export default api;
 
-export async function modifyPicture (objectURL, effectId) {
-  let item = null;
-
-  try {
-    let result = await api.post(`/effects/applyWithImgUrl/${effectId}?img_url=${objectURL}`, "", { 
-      headers: { 
-        "accept": "image/gif", 
-        "Content-Type": "text/html", 
-      }, 
-      responseType: "blob" 
-    });
-    item = URL.createObjectURL(result.data);
-  } catch(err) {
-    console.log(err, "error modifyPicture");
-  }
-
-  return item;
-}
-
 export async function uploadtoIPFS (data, isJSON) {
   let result = null;
   const formData = new FormData();
@@ -42,7 +23,7 @@ export async function uploadtoIPFS (data, isJSON) {
     result = await api.post("/ipfs/upload",  formData);
     console.log(result, "RESULT");
   } catch(err) {
-    console.log(err, "error modifyPicture");
+    console.log(err, "error uploadtoIPFS");
   }
 
   return result ? `https://ipfs.io/${result.data.replace(":/", "")}` : null;
@@ -58,13 +39,16 @@ export async function applyNFTsEffect (effectData) {
     console.log(err, "error applyNFTsEffect");
   }
   
-  const bundleImageTempURL = URL.createObjectURL(result.data);
-  console.log(bundleImageTempURL, "bundleImageTempURL");
   let cid = null;
+  // for immidiate display of applied effect from IPFS
+  let bundleImageTempURL = null;
 
   console.log(result.headers.contenturl, "result.headers.contenturl APPLY NFT EFFECT");
-  if (result) {
+  if (typeof result.headers.contenturl === "string") {
     cid = `https://ipfs.io/${result.headers.contenturl.replace(":/", "")}`;
+    bundleImageTempURL = URL.createObjectURL(result.data);
+  } else {
+    throw new Error();
   }
   console.log(cid, "CID APPLY NFT EFFECT");
 

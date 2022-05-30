@@ -3,11 +3,13 @@
     <notifications />
 
     <!-- Currently problem in that, Phantom wallet disconnecting by himself after 5-10 minutes of login-->
-    <div v-if="connecting" class="loading-container loading-container--app">
+    <div
+      v-if="connecting"
+      class="loading-container loading-container--app"
+    >
       <spinner :size="82" color="#000" />
-      <h1 v-if="connecting">Signing to wallet</h1>
+      <h1>Signing to wallet</h1>
     </div>
-
     <template v-else>
       <HeadBar v-if="connected"/>
 

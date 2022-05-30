@@ -42,12 +42,6 @@
             class="input form-nft__input"
             v-model="bundleObj.name"
           >
-          <!-- <textarea
-            type="text"
-            placeholder="NFT description"
-            class="input form-nft__input form-nft__textarea"
-            v-model="bundleObj.description"
-          /> -->
           <button
             class="main-btn"
             type="submit"
@@ -75,7 +69,7 @@
 import {
   actions,
 } from "@metaplex/js";
-import { reactive, onBeforeMount, ref, computed, onMounted } from "vue";
+import { reactive, computed, onMounted } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { notify } from "@kyvg/vue3-notification";
@@ -98,8 +92,6 @@ const { StatusType } = statusMixin();
 const store = useStore();
 const router = useRouter();
 
-let nftArray = ref([]);
-
 const bundleObj = reactive({
   name: "NFT token 2 title",
   symbol: "bundle",
@@ -121,28 +113,18 @@ const bundleObj = reactive({
   use: null
 });
 
-const getStatus = computed({
-  get() {
-    return store.getters["getStatus"];
-  },
-});
+const getStatus = computed(() => store.getters.getStatus);
 
 const getNavigation = [{
   text: "Back to Gallery",
   name: "ChooseNFT",
 }];
 
-const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
-});
-
 const getNFTsData = computed({
   get() {
-    if (getAllNFTs.value && getAllNFTs.value.length) {
-      return nftArray.value.map((urlToken) => {
-        const item = getAllNFTs.value.find((nftObj) => nftObj.mint === urlToken);
+    if (store.getters.getAllNFTs && store.getters.getAllNFTs.length) {
+      return store.getters.getNFTchoice.map((urlToken) => {
+        const item = store.getters.getAllNFTs.find((nftObjData) => nftObjData.mint === urlToken);
         return item;
       }).filter(Boolean);
     }
@@ -150,38 +132,10 @@ const getNFTsData = computed({
   },
 });
 
-const getSolanaInstance = computed({
-  get() {
-    return store.getters["getSolanaInstance"];
-  },
-});
-
-const getNFTdeployResult = computed({
-  get() {
-    return store.getters["getNFTdeployResult"];
-  },
-});
-
-const getSolanaWalletInstance = computed({
-  get() {
-    return store.getters["getSolanaWalletInstance"];
-  },
-});
-
-onBeforeMount(() => {
-  nftArray.value = sessionStorage.getItem("tokens_id").split(",");
-
-  console.log(CONTRACT_PROGRAM_ID, "store.nftArvault_idray");
-});
-
 onMounted(async ()=> {
-  console.log(getSolanaInstance.value, "getSolanaInstance.value");
-  console.log(getSolanaWalletInstance.value, "getSolanaWalletInstance");
-  // const test = getMintInfo(getSolanaInstance.value, new PublicKey("4syogkhaM4kvLEe2TjwbXRSdhw43YC2aGTACWQdfajWj"));
-  
   const test = await PublicKey.findProgramAddress(
     [
-      getSolanaWalletInstance.value.publicKey.toBuffer(),
+      store.getters.getSolanaWalletInstance.publicKey.toBuffer(),
       TOKEN_PROGRAM_ID.toBuffer(),
       new PublicKey("4syogkhaM4kvLEe2TjwbXRSdhw43YC2aGTACWQdfajWj").toBuffer(),
     ],
@@ -190,7 +144,7 @@ onMounted(async ()=> {
 
   // creating nft, require wallet key of creator
   const defaultCreator = {
-    "address": getSolanaWalletInstance.value.publicKey.toString(),
+    "address": store.getters.getSolanaWalletInstance.publicKey.toString(),
     "share": 100
   };
   bundleObj.properties.creators.push(defaultCreator);
@@ -202,17 +156,14 @@ onMounted(async ()=> {
 const bundleNFTs = async () => {
   console.log("BUNDLE");
   try {
-    const connection = getSolanaInstance.value;
-    const fromWallet = getSolanaWalletInstance.value;
-
-    const keyWallet = new PublicKey(getSolanaWalletInstance.value.publicKey.toString());
-
+    const connection = store.getters.getSolanaInstance;
+    const fromWallet = store.getters.getSolanaWalletInstance;
+    const keyWallet = fromWallet.publicKey;
     const tokensMintKeys = [];
 
-    nftArray.value.forEach((item) => {
+    store.getters.getNFTchoice.forEach((item) => {
       tokensMintKeys.push(new PublicKey(item));
     });
-
 
     // BundleTokenAccounts (1, 2, 3 ...)
     const bundleTokenAccountForMints = await Promise.all(tokensMintKeys.map(async (item) => {
@@ -230,7 +181,7 @@ const bundleNFTs = async () => {
 
     // requestin mint ID for every Token Account of existing NFT, which gonna be bundled later
     const TokenAccountParsedMint = await Promise.all(bundleTokenAccountForMints.map(async (item) => {
-      const token = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(item[0], "devnet")).value.data.parsed.info.mint);
+      const token = new PublicKey((await store.getters.getSolanaInstance.getParsedAccountInfo(item[0], "devnet")).value.data.parsed.info.mint);
       return token;
     }));
     
@@ -246,7 +197,7 @@ const bundleNFTs = async () => {
       const instruction = SystemProgram.createAccount({
         programId: TOKEN_PROGRAM_ID,
         space: AccountLayout.span,
-        lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
+        lamports: await store.getters.getSolanaInstance.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
         fromPubkey: keyWallet,
         newAccountPubkey: tempTokenAccounts[index].publicKey
       });
@@ -258,15 +209,15 @@ const bundleNFTs = async () => {
     store.dispatch("setStatus", StatusType.DeployingToIPFS);
 
     await store.dispatch("setDeployToIPFS", { isImageDeployed: false, meta: bundleObj });
-    console.log(getNFTdeployResult, "CREATING");
+    console.log(store.getters.getNFTdeployResult, "CREATING");
 
     store.dispatch("setStatus", StatusType.Approving);
 
     // Block of minting BUNDLE NFT
     const signature = await actions.mintNFT({
       connection,
-      wallet: getSolanaWalletInstance.value,
-      uri: getNFTdeployResult.value,
+      wallet: store.getters.getSolanaWalletInstance,
+      uri: store.getters.getNFTdeployResult,
       maxSupply: 1,
     });
 
@@ -313,7 +264,7 @@ const bundleNFTs = async () => {
     const bundleStorageTokenAccountIx = SystemProgram.createAccountWithSeed({
       basePubkey: bundleStorageAccount.publicKey,
       fromPubkey: keyWallet,
-      lamports: await getSolanaInstance.value.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
+      lamports: await store.getters.getSolanaInstance.getMinimumBalanceForRentExemption(AccountLayout.span, "singleGossip"),
       newAccountPubkey: transferAcc,
       programId: CONTRACT_PROGRAM_ID,
       seed,
@@ -389,7 +340,7 @@ const bundleNFTs = async () => {
     tx.sign(...tempTokenAccounts, bundleStorageAccount);
     
     // also we should sign with Phantom wallet, it gonna ask user to approve
-    await getSolanaWalletInstance.value.signTransaction(tx);
+    await store.getters.getSolanaWalletInstance.signTransaction(tx);
   
     // sending all of it as bytes, and confirm then
     const accountsCreateTx = await connection.sendRawTransaction(tx.serialize());
@@ -426,7 +377,7 @@ const bundleNFTs = async () => {
       initBundleTx,
     );
 
-    await getSolanaWalletInstance.value.signTransaction(tx2);
+    await store.getters.getSolanaWalletInstance.signTransaction(tx2);
     store.dispatch("setStatus", StatusType.Sending);
 
     const sendBundleTx = await connection.sendRawTransaction(tx2.serialize());

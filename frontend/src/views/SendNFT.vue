@@ -84,63 +84,32 @@ const { StatusType } = statusMixin();
 // default wallet id, for testing
 let receiver_id = ref("8T8zhN7AAR3UBfYhiBvKkzS39ii3AZMARZZz2KjA5UnV");
 
-const getSolanaInstance = computed({
-  get() {
-    return store.getters["getSolanaInstance"];
-  },
-});
-
-const getSolanaWalletInstance = computed({
-  get() {
-    return store.getters["getSolanaWalletInstance"];
-  },
-});
-
-const getStatus = computed({
-  get() {
-    return store.getters["getStatus"];
-  },
-});
-
-const getNav = computed({
-  get() {
-    return [
-      {
-        text: "Back to Gallery",
-        name: "ChooseNFT",
-        params: null,
-      },
-    ];
-  },
-});
-
-const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
-});
+const getNav = [{
+  text: "Back to Gallery",
+  name: "ChooseNFT",
+}];
 
 const NFTComputedData = computed({
   get() {
-    if (getAllNFTs.value && getAllNFTs.value.length) {
-      console.log(router, "get router");
-      return getAllNFTs.value.find((item) => item.mint === router.currentRoute.value.params.id);
+    if (store.getters.getAllNFTs && store.getters.getAllNFTs.length) {
+      return store.getters.getAllNFTs.find((item) => item.mint === router.currentRoute.value.params.id);
     }
-    console.log(getAllNFTs.value, "get all nFTS");
     return null;
   },
 });
 
+const getStatus = computed(() => store.getters.getStatus);
+
 const sendNFTHandler = async () => {
   try {
-    const connection = getSolanaInstance.value;
-
-    let mint = new PublicKey(NFTComputedData.value.mint);
-    const fromWallet = getSolanaWalletInstance.value;
+    const connection = store.getters.getSolanaInstance;
+    const fromWallet = store.getters.getSolanaWalletInstance;
+    const mint = new PublicKey(NFTComputedData.value.mint);
     const toWallet = new PublicKey(receiver_id.value);
+
     const fromTokenAccount = await PublicKey.findProgramAddress(
       [
-        getSolanaWalletInstance.value.publicKey.toBuffer(),
+        fromWallet.publicKey.toBuffer(),
         TOKEN_PROGRAM_ID.toBuffer(),
         mint.toBuffer(),
       ],
@@ -150,11 +119,11 @@ const sendNFTHandler = async () => {
     console.log(StatusType, "StatusType");
     store.dispatch("setStatus", StatusType.Approving);
     const signature = await actions.sendToken({
-      connection: connection,
+      connection,
       wallet: fromWallet,
-      source: fromTokenAccount.address,
+      source: fromTokenAccount[0],
       destination: toWallet,
-      mint: mint,
+      mint,
       amount: 1,
     });
 

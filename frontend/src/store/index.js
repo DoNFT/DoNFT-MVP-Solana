@@ -6,7 +6,11 @@ import {
   getImageForTokenByURI,
 } from "@/solana_utilities";
 
-import {StatusType, getIPFS} from "@/utilities";
+import {
+  StatusType,
+  getIPFS,
+  SystemErrors
+} from "@/utilities";
 
 export default createStore({
   state: {
@@ -24,6 +28,23 @@ export default createStore({
     walletError: false,
     nftsAreLoaded: false,
     choice: false,
+    // preuploaded images for random NFTs
+    randomNFTArr: [
+      "https://bafkreibsgijmp53nwssszihmmq25q4ippdfqm67hplgvnjajyymsngksey.ipfs.nftstorage.link/",
+      "https://bafkreieflpqauetjd52ywpcyqggp66vtnfqhkmthr6ng3yqagk45yltp6q.ipfs.nftstorage.link/",
+      "https://bafkreig3suewzhzunlimmtfhycefv3szqux5qbsrllvovrk7ftv5aifmhu.ipfs.nftstorage.link/",
+      "https://bafkreih6hd4ysjce443cmiuagli5bnog4g6uz2r66xqmyg4d6ufdh3ttmm.ipfs.nftstorage.link/",
+      "https://bafkreibb4ukdluctf3d377i4r627xcn2ydqtl35yulawwa2ty65cysv6vq.ipfs.nftstorage.link/",
+    ],
+    randomEffectsArr: [
+      "https://bafkreif42p2e7ep5q3kpuoz2dlpxmctwr7unajswe3ibq6fm6rcinvjwk4.ipfs.nftstorage.link/",
+      "https://bafkreieqmictg2ujcnsrudnq72mmijb3nelwlpzb7gr7xhn77j2aihzlcu.ipfs.nftstorage.link/",
+      "https://bafybeifdsj6pzie4vos42oyiou3lyesyefs5uj7uyxlgjqbdmg7msdvvpi.ipfs.nftstorage.link/",
+      "https://bafybeigfhupxt6zjfqykf54whf7pabtugo5l57n6t5k5or66e4sovsdaiu.ipfs.nftstorage.link/",
+      "https://bafybeibe2px7qbklyk4r7d4mxttb3cqwjx46cdjteg6pd55oajbmxxcvfm.ipfs.nftstorage.link/",
+      "https://bafybeidctmnh3y4g4i57b5pltsvslkjjooa64avfyyoj5de25mouf3ct5e.ipfs.nftstorage.link/",
+      "https://bafybeidctmnh3y4g4i57b5pltsvslkjjooa64avfyyoj5de25mouf3ct5e.ipfs.nftstorage.link/",
+    ]
   },
   mutations: {
     setStatus (state, status) {
@@ -50,7 +71,7 @@ export default createStore({
       state.nftsAreLoaded = payload;
     },
     SET_BUNDLE_NFTS (state, payload) {
-      sessionStorage.setItem("tokens_id", payload);
+      localStorage.setItem("tokens_id", payload);
     },
     SET_LOADING_NFTS (state, payload) {
       state.loadingNFTs = payload;
@@ -65,7 +86,7 @@ export default createStore({
     SET_CONNECTED(state, address) {
       state.solanaWalletConnected = true;
       state.solanaWalletAddress = address;
-      sessionStorage.setItem("solana_wallet_address", address);
+      localStorage.setItem("solana_wallet_address", address);
     },
     SET_DEPLOYED_NFT(state, payload) {
       state.deployedNFT = payload;
@@ -79,7 +100,7 @@ export default createStore({
       state.solanaInstance = null;
       state.solanaWalletInstance = null;
       state.allNFTs = [];
-      sessionStorage.removeItem("solana_wallet_address", null);
+      localStorage.removeItem("solana_wallet_address", null);
     },
     SET_SOLANA_INSTANCE(state, payload) {
       state.solanaInstance = payload;
@@ -97,13 +118,17 @@ export default createStore({
       commit("setIpfs", await ipfs.create());
     },
     async setDeployToIPFS ({commit, getters}, { isImageDeployed = false, meta }) {
-      // dispatch('setStatus', StatusType.DeployingToIPFS)
-      console.log(meta, "META");
-      commit("SET_DEPLOYED_NFT", await deployNFTtoIPFS(getters.getIpfs, meta, isImageDeployed));
+      try {
+        console.log(meta, "META");
+        commit("SET_DEPLOYED_NFT", await deployNFTtoIPFS(getters.getIpfs, meta, isImageDeployed));
+      } catch(err) {
+        console.log(err, "ERROR setDeployToIPFS");
+        throw SystemErrors.IPFS_SAVE;
+      }
     },
     // solana storage a little different with NEAR
     // data of NFT storing link to IPFS with extra data, where are METAPLEX fields stored with image
-    // after loading METAPLEX data, we can get real image addressgetImageIPFSuri
+    // after loading METAPLEX data, we can get real image getImageForTokenByURI
     async setTokenImage ({getters}, { token, getIPFSurl }) {
       let url = token.uri;
       let data = null;
@@ -128,6 +153,7 @@ export default createStore({
     getIpfs: state => state.ipfs,
     getNFTdeployResult: state => state.deployedNFT,
     getAllNFTs: state => state.allNFTs,
+    getNFTchoice: () => (localStorage.getItem("tokens_id") || "").split(","),
     getDialogWalletStatus: (state) => state.solanaDialogOpenStatus,
     getWalletConnection: (state) => state.solanaWalletConnected,
     getWalletAddress: (state) => state.solanaWalletAddress,
@@ -140,5 +166,38 @@ export default createStore({
     getNFTsLoadStatus: state => state.nftsAreLoaded,
     getEffectChoice: state => state.effectChoice,
     getEffect: state => state.allNFTs.find(x => x.mint === state.effectChoice),
+    filteredNFTbyContract: (state) => {
+      if (state.allNFTs && state.allNFTs.length) {
+        const nftContract = [];
+        const effectContract = [];
+        const bundleContract = [];
+        const otherContract = [];
+
+        state.allNFTs.forEach((item) => {
+          if (item.data.symbol === "nft") {
+            return nftContract.push(item);
+          }
+          if (item.data.symbol === "effect") {
+            effectContract.push(item);
+            return;
+          }
+          if (item.data.symbol === "bundle") {
+            bundleContract.push(item);
+            return;
+          }
+
+          otherContract.push(item);
+        });
+
+        return [
+          { name: "nft",  items: nftContract },
+          { name: "effect", items: effectContract },
+          { name: "bundle", items: bundleContract },
+          { name: "other", items: otherContract },
+        ];
+      }
+
+      return [];
+    }
   },
 });

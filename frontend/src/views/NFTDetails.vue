@@ -23,24 +23,14 @@
           <div
             class="form-nft-send__inputs"
           >
-            <template
-              v-if="getCurrentNFT"
-            >
-              <span class="form-nft-send__inputs-title">Title</span>
-              <input
-                type="text"
-                placeholder="NFT title"
-                class="input form-nft__input"
-                :value="getCurrentNFT.name"
-              >
-            </template>
-            <!-- <span class="form-nft-send__inputs-title">Description</span>
-            <textarea
+            <span class="form-nft-send__inputs-title">Title</span>
+            <input
               type="text"
-              placeholder="NFT description"
-              class="input form-nft__input form-nft__textarea"
-              :value="getCurrentNFT.description"
-            /> -->
+              placeholder="NFT title"
+              class="input form-nft__input"
+              :value="NFTComputedData.data.name"
+              readonly
+            >
             <div class="form-nft__bottom">
               <button
                 class="main-btn"
@@ -103,21 +93,21 @@
 </template>
 
 <script setup>
-import { programs } from "@metaplex/js";
+import { programs, actions } from "@metaplex/js";
 import { computed, watch, ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-import { actions } from "@metaplex/js/";
 import { PublicKey, Keypair, TransactionInstruction, Transaction } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 import { notify } from "@kyvg/vue3-notification";
 import statusMixin from "@/mixins/StatusMixin";
+import { AppError } from "@/utilities";
 
 import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
 import Spinner from "@/components/Spinner";
 
-let vaultPubkey = ref(null);
+let vaultPubkey = null;
 
 const bundleNFTs = ref([]);
 
@@ -131,55 +121,22 @@ const router = useRouter();
 const store = useStore();
 const { StatusType } = statusMixin();
 
-const getAllNFTs = computed({
-  get() {
-    return store.getters["getAllNFTs"];
-  },
-});
+// getters
+const getStatus = computed(() => store.getters.getStatus);
 
-const getStatus = computed({
-  get() {
-    return store.getters["getStatus"];
+const getNav = [
+  {
+    text: "Back to Gallery",
+    name: "ChooseNFT",
+    params: null,
   },
-});
-
-const getCurrentNFT = computed({
-  get() {
-    return store.getters["getCurrentNFT"];
-  },
-});
-
-const getNav = computed({
-  get() {
-    return [
-      {
-        text: "Back to Gallery",
-        name: "ChooseNFT",
-        params: null,
-      },
-    ];
-  },
-});
-
-const getSolanaInstance = computed({
-  get() {
-    return store.getters["getSolanaInstance"];
-  },
-});
-
-const getSolanaWalletInstance = computed({
-  get() {
-    return store.getters["getSolanaWalletInstance"];
-  },
-});
+];
 
 const NFTComputedData = computed({
   get() {
-    if (getAllNFTs.value && getAllNFTs.value.length) {
-      console.log(router, "get router");
-      return getAllNFTs.value.find((item) => item.mint === router.currentRoute.value.params.id);
+    if (store.getters.getAllNFTs && store.getters.getAllNFTs.length) {
+      return store.getters.getAllNFTs.find((item) => item.mint === router.currentRoute.value.params.id);
     }
-    console.log(getAllNFTs.value, "get all nFTS");
     return null;
   },
 });
@@ -200,12 +157,13 @@ watch(() => NFTComputedData.value, () => {
 const burnNFTHandler = async () => {
   console.log(actions, "burnNFTHandler");
   try {
-    const connection = getSolanaInstance.value;
-    let mint = new PublicKey(NFTComputedData.value.mint);
-    const fromWallet = getSolanaWalletInstance.value;
+    const connection = store.getters.getSolanaInstance;
+    const fromWallet = store.getters.getSolanaWalletInstance;
+    const mint = new PublicKey(NFTComputedData.value.mint);
+
     const fromTokenAccount = await PublicKey.findProgramAddress(
       [
-        getSolanaWalletInstance.value.publicKey.toBuffer(),
+        fromWallet.publicKey.toBuffer(),
         TOKEN_PROGRAM_ID.toBuffer(),
         mint.toBuffer(),
       ],
@@ -227,6 +185,7 @@ const burnNFTHandler = async () => {
     store.dispatch("setStatus", StatusType.Sending);
     const response = await connection.confirmTransaction(signature.txId, "processed");
     console.log(response, "response");
+
     if (response.value && response.value.err === null) {
       store.dispatch("setStatus", StatusType.ChoosingParameters);
       store.dispatch("setAllSolanaNFts");
@@ -238,6 +197,7 @@ const burnNFTHandler = async () => {
         duration: 6000,
       });
     }
+
   } catch(err) {
     console.log(err, "ERRROR burnNFTHandler");
     store.dispatch("setStatus", StatusType.ChoosingParameters);
@@ -251,6 +211,7 @@ const burnNFTHandler = async () => {
 };
 
 const loadBundleNFTs = async () => {
+  const connection = store.getters.getSolanaInstance;
   console.log(bundleStorageAccount, "bundle acc");
   const seed = NFTComputedData.value.mint.substr(0, 20);
   const transferAcc = await PublicKey.createWithSeed(
@@ -260,7 +221,7 @@ const loadBundleNFTs = async () => {
   );
   vaultPubkey = transferAcc;
 
-  const TokenMintAccountPubkey1 = (await getSolanaInstance.value.getAccountInfo(transferAcc, "devnet"));
+  const TokenMintAccountPubkey1 = (await connection.getAccountInfo(transferAcc, "devnet"));
   if (!TokenMintAccountPubkey1) return;
 
   const bufferTest = Buffer.from(TokenMintAccountPubkey1.data);
@@ -279,8 +240,12 @@ const loadBundleNFTs = async () => {
   }
 
   const dataForEveryNFT = await Promise.all(bundleItems.map(async (item) => {
-    const realMint = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(item, "devnet")).value.data.parsed.info.mint);
-    const data = await programs.metadata.Metadata.findByMint(getSolanaInstance.value, realMint);
+    let realMint = (await connection.getParsedAccountInfo(item, "devnet"))?.value?.data?.parsed?.info?.mint;
+    
+    if (realMint === undefined || realMint === "null") return {};
+    else new PublicKey(realMint);
+
+    const data = await programs.metadata.Metadata.findByMint(connection, realMint);
 
     return {
       ...data.data,
@@ -304,16 +269,9 @@ const approveNFTHandler = () => {
 const unbundleNFT = async () => {
   console.log("unbundleNFT");
   try {
-    const connection = getSolanaInstance.value;
-
-    const fromWallet = getSolanaWalletInstance.value;
-
-    const keyWallet = new PublicKey(getSolanaWalletInstance.value.publicKey.toString());
-
-    console.log(bundleNFTs.value[0].mint, "nftArray.value[0]");
-    const token1 = new PublicKey(bundleNFTs.value[0].mint);
-    const token2 = new PublicKey(bundleNFTs.value[1].mint);
-    console.log(keyWallet, "keyWallet");
+    const connection = store.getters.getSolanaInstance;
+    const fromWallet = store.getters.getSolanaWalletInstance;
+    const keyWallet = fromWallet.publicKey;
 
     const tokensMintKeys = [];
 
@@ -334,56 +292,12 @@ const unbundleNFT = async () => {
       return token;
     }));
 
-    const BundleTokenAccount1 = await PublicKey.findProgramAddress(
-      [
-        fromWallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        token1.toBuffer(),
-      ],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-    console.log(BundleTokenAccount1[0].toString(), "BundleTokenAccount1");
-
-    const BundleTokenAccount2 = await PublicKey.findProgramAddress(
-      [
-        fromWallet.publicKey.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        token2.toBuffer(),
-      ],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    );
-    console.log(BundleTokenAccount2[0].toString(), "BundleTokenAccount1");
-
-    const vaultPDA = await PublicKey.findProgramAddress(
-      [
-        keyWallet.toBuffer(),
-      ],
-      CONTRACT_PROGRAM_ID
-    );
-    console.log(vaultPDA[0].toString(), "vaultPDA");
-
-    const TokenAccountParsedMint = await Promise.all(bundleTokenAccountForMints.map(async (item) => {
-      console.log(item, "TokenAccountParsedMint");
-      const token = new PublicKey((await getSolanaInstance.value.getParsedAccountInfo(item[0], "devnet")).value.data.parsed.info.mint);
-      console.log(token.toString(), "token");
-      return token;
-    }));
-    console.log(TokenAccountParsedMint, "TokenAccountParsedMint-----");
-    
-    const TokenMintAccountPubkey1 = (await getSolanaInstance.value.getParsedAccountInfo(BundleTokenAccount1[0], "devnet"));
-    const TokenMintAccountPubkey2 = (await getSolanaInstance.value.getParsedAccountInfo(BundleTokenAccount2[0], "devnet"));
-    console.log(TokenMintAccountPubkey1, "TokenMintAccountPubkey1");
-    console.log(TokenMintAccountPubkey2, "TokenMintAccountPubkey2");
-
-    console.log(bundleNFTs.value[0].pdaMint.toString(), "pdaMint[0] mint");
     const bundleStorageTokenAccountProgram = await PublicKey.findProgramAddress(
       [
         new PublicKey(NFTComputedData.value.mint).toBuffer(),
       ],
       CONTRACT_PROGRAM_ID
     );
-
-    const bundleStorageAccount = Keypair.fromSecretKey(Uint8Array.from([138,133,11,131,247,141,131,185,159,96,109,107,180,236,20,176,63,41,69,76,179,63,201,132,193,76,220,28,143,52,254,215,31,128,60,52,52,212,51,196,74,36,28,61,13,2,210,174,164,102,234,182,74,120,227,153,67,193,173,126,14,38,102,210]));
 
     const superNFTTokenAccount = await PublicKey.findProgramAddress(
       [
@@ -434,7 +348,7 @@ const unbundleNFT = async () => {
 
     const bundle_instruction_data = [1, bundleStorageTokenAccountProgram[1]];
 
-    const latestBlockHash1 = await connection.getLatestBlockhash();
+    const latestBlockHash = await connection.getLatestBlockhash();
     const initEscrowIx = new TransactionInstruction({
       programId: CONTRACT_PROGRAM_ID,
       keys,
@@ -445,25 +359,19 @@ const unbundleNFT = async () => {
     store.dispatch("setStatus", StatusType.Sending);
     const tx = new Transaction({
       feePayer: keyWallet,
-      recentBlockhash: latestBlockHash1.blockhash,
+      recentBlockhash: latestBlockHash.blockhash,
     });
 
-    // bundleStorageTokenAccountIx,
-    // initEscrowIx,
     tx.add(
       initEscrowIx,
       burnTx,
     );
-    console.log("tx 1", tx);
-    console.log(bundleStorageAccount.publicKey.toString(), "bundleStorageAccount.mint");
-    const signed1 = await getSolanaWalletInstance.value.signTransaction(tx);
-    const sendTx = await connection.sendRawTransaction(signed1.serialize());
-    const response3 = await connection.confirmTransaction(sendTx, "processed");
-    console.log("signature 1", sendTx);
-    console.log("response3", response3);
-    store.dispatch("setStatus", StatusType.Minting);
 
-    if (response3.value && response3.value.err === null) {
+    const signed = await fromWallet.signTransaction(tx);
+    const sendTx = await connection.sendRawTransaction(signed.serialize());
+    const response = await connection.confirmTransaction(sendTx, "processed");
+
+    if (response.value && response.value.err === null) {
       store.dispatch("setAllSolanaNFts");
       store.dispatch("setStatus", StatusType.ChoosingParameters);
       router.push({ name: "ChooseNFT"});
@@ -477,12 +385,22 @@ const unbundleNFT = async () => {
   } catch(err) {
     console.log(err, "ERROR BUNDLE");
     store.dispatch("setStatus", StatusType.ChoosingParameters);
-    notify({
-      title: "Transaction status",
-      type: "error",
-      text: `Something wrong, Error: ${err}`,
-      duration: 6000,
-    });
+
+    if(err instanceof AppError) {
+      notify({
+        title: "Error",
+        type: "error",
+        text: err,
+        duration: 6000,
+      });
+    } else {
+      notify({
+        title: "Error",
+        type: "error",
+        text: "Undefined error",
+        duration: 6000,
+      });
+    }
   }
 };
 

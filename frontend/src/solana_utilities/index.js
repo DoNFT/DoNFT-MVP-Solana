@@ -33,8 +33,6 @@ export async function loadAllNFTs(solanaInstance, walletInstance, commit) {
 async function pushObjectToIpfs(ipfsInstance, object) {
   let cid = null;
   try {
-    // cid = await uploadtoIPFS(JSON.stringify(object), true);
-    // cid = await ipfsInstance.add(JSON.stringify(object));
     let file = new Blob([JSON.stringify(object)], {type: "application/json"});
     cid = await client.storeBlob(file);
   } catch(err) {
@@ -49,18 +47,8 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
 
   if (!isImageDeployed) {
     const cid = await uploadtoIPFS(meta.image, false);
-    console.log(cid, "------------CID---------------");
-    // current type https://ipfs.io/ipfs/{cid}/file
     imageCID = cid;
   }
-
-  // let formData = null;
-  // const fetchUrl = await fetch(meta.image);
-  // const file = await fetchUrl.blob();
-  // formData = new File([file], "file", { type: "image/png" });
-  // console.log(file, "file");
-  // console.log(formData, "FORMDATA");
-  
 
   // let meta = JSON.parse(JSON.stringify(oldMeta));
   // meta.animation_url = `ipfs://${imageCID}`;
