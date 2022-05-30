@@ -65,44 +65,12 @@ const routes = [
     name: "AddEffect",
     component: AddEffect,
     meta: { title: "Do[NFT]", requiresAuth: true },
-    // beforeEnter(to, _from, next) {
-    //   const NFTChoice = store.getters.getAllNFTs.find(x => x.token_id === to.params.id);
-    
-    //   if (to.name === "AddEffect" && !NFTChoice) {
-    //     next("/choose_nft");
-    //     notify({
-    //       group: "foo",
-    //       type: "error",
-    //       title: "Important message",
-    //       text: `Sorry, NFT with ID ${to.params.id} does not exit`,
-    //     });
-    //   } else {
-    //     next();
-    //   }
-    // },
   },
   {
     path: "/add_effect/:id/confirm/:effectId",
     name: "AddEffectConfirm",
     component: AddEffectConfirm,
     meta: { title: "Do[NFT]", requiresAuth: true },
-    // async beforeEnter(to, _from, next) {
-    //   const effectChoice = store.getters.getAllNFTs.find(x => x.token_id === to.params.effectId);
-
-    //   const isRedirected = await getTransactionForUser(to, next);
-    
-    //   if (to.name === "AddEffectConfirm" && !effectChoice && !isRedirected) {
-    //     next(`/add_effect/${to.params.id}`);
-    //     Vue.notify({
-    //       group: "foo",
-    //       type: "error",
-    //       title: "Important message",
-    //       text: `Sorry, effect with ID ${to.params.effectId} does not exit`,
-    //     });
-    //   } else {
-    //     next(`/add_effect/${to.params.id}/confirm/${to.params.effectId}`);
-    //   }
-    // },
   },
 ];
 
@@ -139,7 +107,7 @@ initWallet(walletOptions);
 
 const { connecting, connected, disconnecting, wallet } = useWallet();
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach((to) => {
   // wallet.value._events.onReadyStateChange(() => console.log("READY STATE"));
   console.log(wallet.value, "wallet.value");
 
@@ -153,9 +121,9 @@ router.beforeEach(async (to, _from, next) => {
   const user = connecting.value || connected.value;
 
   if (requiresAuth && !user) {
-    next("/login");
+    return { name: "LoginView"};
   } else {
-    next();
+    return true;
   }
 });
 
