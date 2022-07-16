@@ -5,11 +5,9 @@ DoNFT is a decentralized protocol that allows
 - bundling a few NFTs to a single NFT.
 
 
-## Presentation for Encode x NEAR Hackathon
-
-https://www.canva.com/design/DAE7daHS_WY/mRNw8MMfLr2OsVpgPZvgnw/view?utm_content=DAE7daHS_WY&utm_campaign=designshare&utm_medium=link&utm_source=publishsharelink
-
 ## Demo
+
+https://solana.donft.io/
 
 https://youtu.be/PXhaQRQQ1vA
 
