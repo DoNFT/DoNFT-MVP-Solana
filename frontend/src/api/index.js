@@ -7,6 +7,33 @@ const api  = axios.create({
 
 export default api;
 
+export async function getFromBackIPFS (uriIPFS) {
+  let result = null;
+
+  try {
+    result = await api.get(`/ipfs/cat?ipfs_addr=${uriIPFS}`);
+    console.log(result, "RESULT");
+  } catch(err) {
+    console.log(err, "error uploadtoIPFS");
+  }
+
+  return result ? result.data : null;
+}
+
+export async function getAsBlobFromBackIPFS (uriIPFS) {
+  let result = null;
+
+  try {
+    result = await api.get(`/ipfs/cat?ipfs_addr=${uriIPFS}`, {responseType: "blob"});
+    console.log(result, "RESULT");
+  } catch(err) {
+    console.log(err, "error uploadtoIPFS");
+  }
+
+  return result ? result.data : null;
+}
+
+
 export async function uploadtoIPFS (data, isJSON) {
   let result = null;
   const formData = new FormData();

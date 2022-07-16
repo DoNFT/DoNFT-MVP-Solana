@@ -1,6 +1,6 @@
 import untar from "js-untar";
 import { CID_RE } from "@/utilities";
-import { uploadtoIPFS } from "@/api";
+import { uploadtoIPFS, getFromBackIPFS, getAsBlobFromBackIPFS } from "@/api";
 import { NFTStorage } from "nft.storage/dist/bundle.esm.min.js";
 const API_KEY = process.env.VUE_APP_NFT_STORAGE_API_KEY;
 
@@ -28,7 +28,7 @@ export async function loadAllNFTs(solanaInstance, walletInstance, commit) {
   }
 }
 
-// todo: add custom mintNFT
+// todo: add custom mintNFT + upload by BACK
 // metaplex library can not read uri as JSON.stringified
 async function pushObjectToIpfs(ipfsInstance, object) {
   let cid = null;
@@ -52,8 +52,6 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
 
   // let meta = JSON.parse(JSON.stringify(oldMeta));
   // meta.animation_url = `ipfs://${imageCID}`;
-  console.log(ipfsInstance, meta, "metaDATA");
-  console.log(imageCID, "imageCID");
   let uriJSON = {
     ...meta,
     image: imageCID,
@@ -67,7 +65,6 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
       ]
     }
   };
-  console.log(uriJSON, "uriJSON");
   // current type https://ipfs.io/ipfs/{cid}/file
   const metaDataCID = await pushObjectToIpfs(ipfsInstance, uriJSON);
   console.log(metaDataCID, "metaDataCID");
@@ -76,6 +73,7 @@ export async function deployNFTtoIPFS(ipfsInstance, meta, isImageDeployed) {
 
 export async function getImageForTokenByURI(ipfsInstance, imageAddress, getIPFSurl) {
   let image;
+  console.log(imageAddress, "getImageForTokenByURI");
   if (imageAddress) {
     if (imageAddress.startsWith("ipfs") || imageAddress.startsWith("https://ipfs"))  {
       let cid = CID_RE.exec(imageAddress)?.[0];
@@ -96,22 +94,13 @@ async function getDataFromIPFS(ipfsInstance, cid, getIPFSurl) {
     if (cid === "" || cid === null || cid === undefined) {
       return;
     }
-    let content = [];
-    for await (const buff of ipfsInstance.cat(cid, { timeout: 6000 })) {
-      if (buff) {
-        content.push(buff);
-      }
-    }
-    tokenData = Buffer.concat(content).toString();
-    tokenData = JSON.parse(tokenData);
-    console.log(tokenData, getIPFSurl, "tokenDATA getDataFromIPFS");
+    tokenData = await getFromBackIPFS(cid);
 
     if (getIPFSurl) {
       return tokenData;
     }
     
-    if (tokenData.image.startsWith("ipfs") || tokenData.image.startsWith("https://ipfs"))  {
-      console.log(getIPFSurl, "getIPFSurl,  getDataFromIPFS");
+    if (tokenData.image.startsWith("ipfs") || tokenData.image.startsWith("https://ipfs") || tokenData.image.endsWith("link/"))  {
       let cid = CID_RE.exec(tokenData.image)?.[0];
       let data = {
         ...tokenData,
@@ -124,7 +113,9 @@ async function getDataFromIPFS(ipfsInstance, cid, getIPFSurl) {
       if (tokenData.image.endsWith("/file")) {
         data.image = await getImageFromIpfs(ipfsInstance, `${cid}/file`);
       } else {
-        data.image = await getImageFromIpfs(ipfsInstance, cid);
+        let localImageUR2 = await getAsBlobFromBackIPFS(cid);
+  
+        data.image = URL.createObjectURL(localImageUR2);
       }
 
       return data;
