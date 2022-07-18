@@ -54,7 +54,7 @@
               <router-link
                 class="main-btn"
                 :to="{ name: 'SendNFT', params: { id: NFTComputedData.mint }}"
-              >Send NFT page</router-link>
+              >Send NFT</router-link>
             </div>
           </div>
         </div>

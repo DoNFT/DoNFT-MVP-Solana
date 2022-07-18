@@ -5,17 +5,13 @@
       :show-generate-nft="true"
       @generate-random-nft="generateRandomNFT"
     />
+
     <div
-      v-if="getLoadingNFTsStatus ||
-        [
-          StatusType.Approving,
-          StatusType.Sending,
-          StatusType.Minting,
-          StatusType.DeployingToIPFS,
-        ].includes(getStatus)" class="loading-container"
+      v-if="getLoadingNFTsStatus"
+      class="loading-container loading-container--side"
     >
       <spinner :size="92" color="#000" />
-      <h2>{{ getStatusText(getStatus) }}</h2>
+      <h2>Loading NFTs</h2>
     </div>
     <main v-else>
       <h1>Choose NFT and apply effect</h1>
@@ -48,6 +44,31 @@
         </div>
       </div>
     </main>
+
+    <modal-template
+      v-if="showApproveModal"
+      :is-blocked="true"
+      @close="closeModal"
+    >
+      <template #header>
+        <h3>Status of transaction</h3>
+      </template>
+      <template #content>
+        <div
+          v-if="[
+            StatusType.Approving,
+            StatusType.Sending,
+            StatusType.Minting,
+            StatusType.DeployingToIPFS,
+          ].includes(getStatus)"
+          class="loading-container"
+        >
+          <spinner :size="92" color="#000" />
+          <h2>{{ getStatusText(getStatus) }}</h2>
+        </div>
+      </template>
+    </modal-template>
+
   </div>
 </template>
 <script setup>
@@ -60,10 +81,13 @@ import Spinner from "@/components/Spinner";
 import { AppError, SystemErrors } from "@/utilities";
 import { notify } from "@kyvg/vue3-notification";
 import statusMixin from "@/mixins/StatusMixin";
+import ModalTemplate from "@/components/ModalTemplate/ModalTemplate";
 
 const store = useStore();
 const { StatusType } = statusMixin();
-let token_id =  ref([]);
+let token_id = ref([]);
+
+let showApproveModal = ref(false);
 
 let nftObj = {
   name: "",
@@ -152,6 +176,8 @@ const generateRandomNFT = async (nftType) => {
     let randomNumber = Math.floor(Math.random() * 5);
     let randomImage =  randomNFTArr[randomNumber];
 
+    showApproveModal.value = true;
+
     if (nftType === "effectNFT") {
       randomNumber = Math.floor(Math.random() * 6);
       randomImage =  randomEffectsArr[randomNumber];
@@ -190,19 +216,23 @@ const generateRandomNFT = async (nftType) => {
     try {
       console.log(store.getters.getNFTdeployResult, "CREATING");
       store.dispatch("setStatus", StatusType.Approving);
+
       const signature = await actions.mintNFT({
         connection,
         wallet: store.getters.getSolanaWalletInstance,
         uri: store.getters.getNFTdeployResult,
         maxSupply: 1
       });
+
       store.dispatch("setStatus", StatusType.Minting);
       const response = await connection.confirmTransaction(signature.txId, "finalized");
+
       console.log(signature, "CREATING");
       if (response.value && response.value.err === null) {
         store.dispatch("setStatus", StatusType.ChoosingParameters);
         store.dispatch("setAllSolanaNFts");
-        // router.push({ name: "ChooseNFT"});
+        showApproveModal.value = false;
+
         notify({
           title: "Transaction status",
           type: "success",
@@ -214,6 +244,8 @@ const generateRandomNFT = async (nftType) => {
     } catch(err) {
       console.log(err, "error");
       store.dispatch("setStatus", StatusType.ChoosingParameters);
+      showApproveModal.value = false;
+
       if (err instanceof AppError) {
         throw err; 
       } else {

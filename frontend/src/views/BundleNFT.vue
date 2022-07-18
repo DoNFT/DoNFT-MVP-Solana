@@ -50,17 +50,29 @@
         </div>
       </form>
 
-      <div
-        v-if="[
-          StatusType.Approving,
-          StatusType.Sending,
-          StatusType.Minting,
-          StatusType.DeployingToIPFS,
-        ].includes(getStatus)" class="loading-container"
+
+      <modal-template
+        v-if="showApproveModal"
+        :is-blocked="true"
+        @close="closeModal"
       >
-        <spinner :size="92" color="#000" />
-        <h2>{{ getStatusText(getStatus) }}</h2>
-      </div>
+        <template #header>
+          <h3>Status of transaction</h3>
+        </template>
+        <template #content>
+          <div
+            v-if="[
+              StatusType.Approving,
+              StatusType.Sending,
+              StatusType.Minting,
+              StatusType.DeployingToIPFS,
+            ].includes(getStatus)" class="loading-container"
+          >
+            <spinner :size="92" color="#000" />
+            <h2>{{ getStatusText(getStatus) }}</h2>
+          </div>
+        </template>
+      </modal-template>
     </main>
   </div>
 </template>
@@ -69,7 +81,7 @@
 import {
   actions,
 } from "@metaplex/js";
-import { reactive, computed, onMounted } from "vue";
+import { reactive, computed, onMounted, ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { notify } from "@kyvg/vue3-notification";
@@ -81,6 +93,7 @@ import NavBar from "@/components/NavBar/NavBar";
 import TokenCard from "@/components/TokenCard/TokenCard";
 import UploaderComp from "@/components/Uploader/UploaderComp";
 import Spinner from "@/components/Spinner";
+import ModalTemplate from "@/components/ModalTemplate/ModalTemplate";
 
 const CONTRACT_PROGRAM_ID = new PublicKey(
   "DyPhsdovhyrTktsJS6nrghGvkRoo2FK3ztH1sKKPBDU4",
@@ -91,6 +104,7 @@ const bundleStorageAccount = Keypair.fromSecretKey(Uint8Array.from([138,133,11,1
 const { StatusType } = statusMixin();
 const store = useStore();
 const router = useRouter();
+let showApproveModal = ref(false);
 
 const bundleObj = reactive({
   name: "NFT token 2 title",
@@ -160,6 +174,7 @@ const bundleNFTs = async () => {
     const fromWallet = store.getters.getSolanaWalletInstance;
     const keyWallet = fromWallet.publicKey;
     const tokensMintKeys = [];
+    showApproveModal.value = true;
 
     store.getters.getNFTchoice.forEach((item) => {
       tokensMintKeys.push(new PublicKey(item));
@@ -389,6 +404,8 @@ const bundleNFTs = async () => {
     if (sendBundleTxResponse.value && sendBundleTxResponse.value.err === null) {
       store.dispatch("setAllSolanaNFts");
       router.push({ name: "ChooseNFT"});
+      showApproveModal.value = false;
+
       notify({
         title: "Transaction status",
         type: "success",
@@ -399,6 +416,7 @@ const bundleNFTs = async () => {
     store.dispatch("setStatus", StatusType.ChoosingParameters);
   } catch(err) {
     console.log(err, "ERROR BUNDLE");
+    showApproveModal.value = false;
     store.dispatch("setStatus", StatusType.ChoosingParameters);
     notify({
       title: "Transaction status",

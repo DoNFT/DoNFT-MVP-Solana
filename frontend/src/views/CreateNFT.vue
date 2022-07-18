@@ -32,16 +32,29 @@
           >Submit</button>
         </div>
       </div>
-      <div
-        v-if="[
-          StatusType.Approving,
-          StatusType.Sending,
-          StatusType.Minting,
-        ].includes(getStatus)" class="loading-container"
+
+      <modal-template
+        v-if="showApproveModal"
+        :is-blocked="true"
+        @close="closeModal"
       >
-        <spinner :size="92" color="#000" />
-        <h2>{{ getStatusText(getStatus) }}</h2>
-      </div>
+        <template #header>
+          <h3>Status of transaction</h3>
+        </template>
+        <template #content>
+          <div
+            v-if="[
+              StatusType.Approving,
+              StatusType.Sending,
+              StatusType.Minting,
+              StatusType.DeployingToIPFS
+            ].includes(getStatus)" class="loading-container"
+          >
+            <spinner :size="92" color="#000" />
+            <h2>{{ getStatusText(getStatus) }}</h2>
+          </div>
+        </template>
+      </modal-template>
 
     </main>
   </div>
@@ -49,7 +62,7 @@
 
 <script setup>
 import { actions } from "@metaplex/js";
-import { reactive, computed, onMounted } from "vue";
+import { reactive, computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import statusMixin from "@/mixins/StatusMixin";
@@ -57,6 +70,7 @@ import { notify } from "@kyvg/vue3-notification";
 
 import NavBar from "@/components/NavBar/NavBar";
 import UploaderComp from "@/components/Uploader/UploaderComp";
+import ModalTemplate from "@/components/ModalTemplate/ModalTemplate";
 import Spinner from "@/components/Spinner";
 import { AppError } from "@/utilities";
 
@@ -85,6 +99,8 @@ const nftObj = reactive({
   use: null
 });
 
+let showApproveModal = ref(false);
+
 const getNavigation = [{
   text: "Back to Gallery",
   name: "ChooseNFT",
@@ -105,6 +121,10 @@ const setUploadedImg = (img) => {
   nftObj.image = img; 
 };
 
+const closeModal = () => {
+  showApproveModal.value = false;
+};
+
 //"https://ipfs.io/ipfs/QmX4rTazAq9gmJJJBP3a9FFyQZnoYQfqUUCCizRyhopcAt"
 
 const createNewNFT = async () => {
@@ -112,6 +132,7 @@ const createNewNFT = async () => {
   try {
     const connection = store.getters.getSolanaInstance;
     const fromWallet = store.getters.getSolanaWalletInstance;
+    showApproveModal.value = true;
 
     store.dispatch("setStatus", StatusType.DeployingToIPFS);
     await store.dispatch("setDeployToIPFS", { isImageDeployed: false, meta: nftObj });
@@ -132,6 +153,7 @@ const createNewNFT = async () => {
     if (response.value && response.value.err === null) {
       store.dispatch("setStatus", StatusType.ChoosingParameters);
       store.dispatch("setAllSolanaNFts");
+      showApproveModal.value = false;
       router.push({ name: "ChooseNFT"});
       notify({
         title: "Transaction status",
@@ -144,6 +166,7 @@ const createNewNFT = async () => {
   } catch(err) {
     console.log(err, "ERRROR createNewNFT");
     store.dispatch("setStatus", StatusType.ChoosingParameters);
+    showApproveModal.value = false;
 
     if(err instanceof AppError) {
       notify({

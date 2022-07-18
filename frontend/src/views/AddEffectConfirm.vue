@@ -49,29 +49,42 @@
         </div>
       </div>
 
-      <div
-        v-if="[
-          StatusType.Approving,
-          StatusType.Sending,
-          StatusType.Minting,
-          StatusType.DeployingToIPFS,
-        ].includes(getStatus)" class="loading-container"
+      <modal-template
+        v-if="showApproveModal"
+        :is-blocked="true"
+        @close="closeModal"
       >
-        <spinner :size="92" color="#000" />
-        <h2>{{ getStatusText(getStatus) }}</h2>
-      </div>
+        <template #header>
+          <h3>Status of transaction</h3>
+        </template>
+        <template #content>
+          <div
+            v-if="[
+              StatusType.Approving,
+              StatusType.Applying,
+              StatusType.Sending,
+              StatusType.Minting,
+              StatusType.DeployingToIPFS,
+            ].includes(getStatus)" class="loading-container"
+          >
+            <spinner :size="92" color="#000" />
+            <h2>{{ getStatusText(getStatus) }}</h2>
+          </div>
+        </template>
+      </modal-template>
     </main>
   </div>
 </template>
 
 <script setup>
 import { actions } from "@metaplex/js";
-import { computed, onMounted, reactive } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import Spinner from "@/components/Spinner";
 import TokenCard from "@/components/TokenCard/TokenCard";
 import NavBar from "@/components/NavBar/NavBar";
+import ModalTemplate from "@/components/ModalTemplate/ModalTemplate";
 
 import { notify } from "@kyvg/vue3-notification";
 import statusMixin from "@/mixins/StatusMixin";
@@ -84,6 +97,7 @@ import { AccountLayout, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, Token } f
 const store = useStore();
 const router = useRouter();
 const { StatusType } = statusMixin();
+let showApproveModal = ref(false);
 
 const CONTRACT_PROGRAM_ID = new PublicKey(
   "DyPhsdovhyrTktsJS6nrghGvkRoo2FK3ztH1sKKPBDU4",
@@ -150,6 +164,7 @@ const handleMint = async () => {
   if (!nftObj.name) {
     alert("Title field is empty");
   } else {
+    showApproveModal.value = true;
     const connection = store.getters.getSolanaInstance;
     const fromWallet = store.getters.getSolanaWalletInstance;
     const tokenData1 = await store.dispatch("setTokenImage", { token: NFTComputedData.value.data, getIPFSurl: true });
@@ -173,6 +188,7 @@ const handleMint = async () => {
 
     // creating new Effect
     try {
+      store.dispatch("setStatus", StatusType.Applying);
       const cidData = await applyNFTsEffect(effectObj);
       console.log(cidData, "CID");
       nftObj.image = cidData.cid;
@@ -400,6 +416,7 @@ const handleMint = async () => {
       // if response contain EMPTY ERROR, its Successed
       if (accountsCreateTxResponse.value && accountsCreateTxResponse.value.err === null) {
         store.dispatch("setStatus", StatusType.ChoosingParameters);
+        showApproveModal.value = false;
 
         // adding bundle obj, to display it without waiting ipfs
         const bundleObj = {
@@ -429,6 +446,8 @@ const handleMint = async () => {
       console.log(err, "error");
       console.log(err, "ERROR BUNDLE");
       store.dispatch("setStatus", StatusType.ChoosingParameters);
+      showApproveModal.value = false;
+
       if(err instanceof AppError) {
         notify({
           title: "Error",

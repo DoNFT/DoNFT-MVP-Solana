@@ -1,4 +1,3 @@
-import untar from "js-untar";
 import { CID_RE } from "@/utilities";
 import { uploadtoIPFS, getFromBackIPFS, getAsBlobFromBackIPFS } from "@/api";
 import { NFTStorage } from "nft.storage/dist/bundle.esm.min.js";
@@ -107,16 +106,18 @@ async function getDataFromIPFS(ipfsInstance, cid, getIPFSurl) {
         image: null,
       };
 
+      let blobImage = null;
+
       // nft.storage return images with /file in the end
       // server on apply effect return image without /file
       // possibly will be fixed later
       if (tokenData.image.endsWith("/file")) {
-        data.image = await getImageFromIpfs(ipfsInstance, `${cid}/file`);
+        blobImage = await getAsBlobFromBackIPFS(`${cid}/file`);
       } else {
-        let localImageUR2 = await getAsBlobFromBackIPFS(cid);
-  
-        data.image = URL.createObjectURL(localImageUR2);
+        blobImage = await getAsBlobFromBackIPFS(cid);
       }
+
+      data.image = URL.createObjectURL(blobImage);
 
       return data;
     } else {
@@ -127,29 +128,29 @@ async function getDataFromIPFS(ipfsInstance, cid, getIPFSurl) {
   }
 }
 
-async function getImageFromIpfs(ipfsInstance, cid) {
-  let blob = null;
-  try {
-    blob = await loadFileFromIPFS(ipfsInstance, cid, 6000);
-  } catch (e) {
-    console.log(e, `getImageFromIpfs ERROR ${cid}`);
-  }
-  return blob ? URL.createObjectURL(blob) : null;
-}
+// async function getImageFromIpfs(ipfsInstance, cid) {
+//   let blob = null;
+//   try {
+//     blob = await loadFileFromIPFS(ipfsInstance, cid, 6000);
+//   } catch (e) {
+//     console.log(e, `getImageFromIpfs ERROR ${cid}`);
+//   }
+//   return blob ? URL.createObjectURL(blob) : null;
+// }
 
-async function loadFileFromIPFS(ipfs, cid, timeout) {
-  if (cid === "" || cid === null || cid === undefined) {
-    return;
-  }
-  let content = [];
-  for await (const buff of ipfs.get(cid, {timeout})) {
-    if (buff) {
-      content.push(buff);
-    }
-  }
-  let archivedBlob = new Blob(content, {type: "application/x-tar"});
-  let archiveArrayBuffer = await archivedBlob.arrayBuffer();
-  let archive = (await untar(archiveArrayBuffer))?.[0];
+// async function loadFileFromIPFS(ipfs, cid, timeout) {
+//   if (cid === "" || cid === null || cid === undefined) {
+//     return;
+//   }
+//   let content = [];
+//   for await (const buff of ipfs.get(cid, {timeout})) {
+//     if (buff) {
+//       content.push(buff);
+//     }
+//   }
+//   let archivedBlob = new Blob(content, {type: "application/x-tar"});
+//   let archiveArrayBuffer = await archivedBlob.arrayBuffer();
+//   let archive = (await untar(archiveArrayBuffer))?.[0];
 
-  return archive.blob;
-}
+//   return archive.blob;
+// }
