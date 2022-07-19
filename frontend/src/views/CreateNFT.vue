@@ -4,14 +4,29 @@
     <main>
       <h1>Create new NFT</h1>
       <div class="form-nft">
-        <uploader-comp @selected="setUploadedImg"/>
+        <div class="form-nft__photo">
+
+          <TakePhoto  v-if="mode === 'selfie'"  @setFile="setFile"/>
+          <uploader-comp v-else @selected="setUploadedImg"/>
+
+          <button
+            v-if="mode === 'photo'"
+            class="main-btn"
+            @click="mode = 'selfie'"
+          >Take a selfie</button>
+          <div
+            v-else
+            @click="mode = 'photo'"
+          >
+            <icon-component
+              icon-type="cross"
+              width="32"
+              height="32"
+              class="form-nft__photo-close"
+            />
+          </div>
+        </div>
         <div class="form-ntf__inputs">
-          <!-- <span class="form-nft-send__inputs-title">Contract</span> -->
-          <!-- <div class="select-wrap">
-            <select v-model="nftObj.contract_id">
-              <option v-for="(item, key) in contractsArr" :key="key" :value="item.getter">{{item.name}}</option>
-            </select>
-          </div> -->
           <span class="form-nft-send__inputs-title">Title</span>
           <input
             type="text"
@@ -71,6 +86,7 @@ import { notify } from "@kyvg/vue3-notification";
 import NavBar from "@/components/NavBar/NavBar";
 import UploaderComp from "@/components/Uploader/UploaderComp";
 import ModalTemplate from "@/components/ModalTemplate/ModalTemplate";
+import TakePhoto from "@/components/TakePhoto/TakePhoto";
 import Spinner from "@/components/Spinner";
 import { AppError } from "@/utilities";
 
@@ -100,6 +116,7 @@ const nftObj = reactive({
 });
 
 let showApproveModal = ref(false);
+let mode = ref("photo");
 
 const getNavigation = [{
   text: "Back to Gallery",
@@ -116,6 +133,15 @@ onMounted(() => {
   };
   nftObj.properties.creators.push(defaultCreator);
 });
+
+const setFile = (blob) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(blob); 
+  reader.onloadend = function() {
+    const base64data = reader.result;                
+    nftObj.image = base64data; 
+  };
+};
 
 const setUploadedImg = (img) => {
   nftObj.image = img; 

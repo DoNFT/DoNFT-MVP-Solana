@@ -138,6 +138,13 @@ button, input {
 	}
 }
 
+.main-btn--photo {
+	position: absolute;
+	left: 0;
+	bottom: -50px;
+	z-index: 10;
+}
+
 .main-btn--reverse-wallets {
 	display: flex;
 	background: #fff;
@@ -170,6 +177,24 @@ button, input {
 
 	&:focus {
 		background-color:#ee3838;
+	}
+}
+
+.main-btn--reverse {
+	background-color: rgba(92, 233, 188, 1);
+	color: #000;
+
+	&:hover {
+		color: #fff;
+		background-color:#2d0949;
+
+		span {
+			color: #fff;
+		}
+	}
+
+	&:focus {
+		background-color:#2d0949;
 	}
 }
 
@@ -454,5 +479,77 @@ select::-ms-expand {
 	@include lg-desktop {
 		width: 33%;
 		margin-top: 0;
+	}
+}
+
+.take-photo{
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  video{
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    position: relative;
+    z-index: 10;
+  }
+
+  &__shot{
+    position: absolute;
+    bottom: 0;
+    left: calc(50% - 76px / 2);
+    width: 76px;
+    height: 20px;
+    z-index: 11;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 20px;
+
+  }
+
+  canvas{
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: transparent;
+    z-index: 1;
+    opacity: 0;
+  }
+
+  img{
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 15;
+
+    & + span{
+      z-index: 16;
+    }
+  }
+}
+
+.form-nft__photo {
+	position: relative;
+
+	.main-btn {
+		margin-top: 10px;
+	}
+}
+
+.form-nft__photo-close {
+	position: absolute;
+	z-index: 10;
+	right: -5px;
+	top: -30px;
+	cursor: pointer;
+
+	&:hover {
+		fill: red;
 	}
 }
