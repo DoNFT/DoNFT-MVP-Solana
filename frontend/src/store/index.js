@@ -64,6 +64,9 @@ export default createStore({
         state.allNFTs.splice(index, 1);
       }
     },
+    setBaseForBundleWithEffect(state, choice) {
+      localStorage.setItem("base_for_bundle_with_effect", choice);
+    },
     SET_EFFECT_CHOICE(state, choice) {
       state.effectChoice = choice;
     },

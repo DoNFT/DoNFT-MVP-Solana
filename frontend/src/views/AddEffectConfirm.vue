@@ -137,8 +137,11 @@ const getNav = [
 let blobImg = null;
 
 const getStatus = computed(() => store.getters.getStatus);
+console.log("getStatus", getStatus);
 const getNFTsLoadStatus = computed(() => store.getters.getNFTsLoadStatus);
+console.log("getNFTsLoadStatus", getNFTsLoadStatus);
 const getEffect = computed(() => store.getters.getEffect);
+console.log("getEffect", getEffect);
 
 const NFTComputedData = computed({
   get() {
@@ -149,6 +152,7 @@ const NFTComputedData = computed({
     return null;
   },
 });
+console.log("NFTComputedData", NFTComputedData);
 
 onMounted(() => {
   store.commit("SET_EFFECT_CHOICE", router.currentRoute.value.params.effectId);
@@ -273,7 +277,7 @@ const handleMint = async () => {
 
 
       store.dispatch("setStatus", StatusType.DeployingToIPFS);
-      await store.dispatch("setDeployToIPFS", { isImageDeployed: true, meta: nftObj });
+      // await store.dispatch("setDeployToIPFS", { isImageDeployed: true, meta: nftObj });
       
       // if need some test data
       //"https://ipfs.io/ipfs/Qmb8yTr9CRhFzTwasPCgXAtLHrfhmNw6i4raJZHr82hzUs"

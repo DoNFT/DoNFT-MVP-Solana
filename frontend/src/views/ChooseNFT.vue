@@ -3,6 +3,7 @@
     <nav-bar
       :navigation="getNav"
       :show-generate-nft="true"
+      :selected-tokens="token_id"
       @generate-random-nft="generateRandomNFT"
     />
 
@@ -72,6 +73,7 @@
   </div>
 </template>
 <script setup>
+/* eslint-disable */
 import { actions } from "@metaplex/js";
 import { computed, ref, onMounted } from "vue";
 import { useStore } from "vuex";

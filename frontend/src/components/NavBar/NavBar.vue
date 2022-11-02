@@ -30,10 +30,11 @@
 </template>
 
 <script setup>
+/* eslint-disable */
 import { defineProps, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 
-defineProps({
+const props = defineProps({
   navigation: {
     type: Array,
     default: () => [],
@@ -41,6 +42,10 @@ defineProps({
   showGenerateNft: {
     type: Boolean,
     default: false,
+  },
+  selectedTokens: {
+    type: Array,
+    default: () => [],
   }
 });
 
@@ -53,7 +58,18 @@ const generateRandomNFT = (val) => {
 };
 
 const handleRedirect = (item) => {
-  router.push({ name: item.name, params: item.params ? item.params : {} });
+  console.warn(item.name);
+  if(item.name === "BundleNFT" && props.selectedTokens.length === 2) {
+      const [token, effect] = props.selectedTokens
+      router.push({
+          name: "AddEffectConfirm",
+          params: {
+              id: token,
+              effectId: effect
+          }
+      });
+  }
+  else router.push({ name: item.name, params: item.params ? item.params : {} });
 };
 </script>
 

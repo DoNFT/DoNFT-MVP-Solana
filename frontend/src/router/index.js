@@ -71,7 +71,7 @@ const routes = [
     name: "AddEffectConfirm",
     component: AddEffectConfirm,
     meta: { title: "Do[NFT]", requiresAuth: true },
-  },
+  }
 ];
 
 const router = createRouter({
