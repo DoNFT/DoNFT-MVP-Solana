@@ -8,7 +8,7 @@
       >
         <button
           :class="['main-btn navbar__nav-wrap__item', {
-            'navbar__nav-wrap__item--disabled': item.params && !item.params.id ? true : false
+            'navbar__nav-wrap__item--disabled': (item.name === 'AddEffectConfirm' && selectedTokens.length !== 2) || (item.name !== 'AddEffectConfirm' && (item.params && !item.params.id))
           }]"
           @click="handleRedirect(item)"
         >
@@ -58,17 +58,18 @@ const generateRandomNFT = (val) => {
 };
 
 const handleRedirect = (item) => {
-  if(item.name === "BundleNFT" && props.selectedTokens.length === 2) {
-      const [token, effect] = props.selectedTokens
-      router.push({
-          name: "AddEffectConfirm",
-          params: {
-              id: token,
-              effectId: effect
-          }
-      });
-  }
-  else router.push({ name: item.name, params: item.params ? item.params : {} });
+  // if(item.name === "BundleNFT" && props.selectedTokens.length === 2) {
+  //     const [token, effect] = props.selectedTokens
+  //     router.push({
+  //         name: "AddEffectConfirm",
+  //         params: {
+  //             id: token,
+  //             effectId: effect
+  //         }
+  //     });
+  // }
+  // else
+  router.push({ name: item.name, params: item.params ? item.params : {} });
 };
 </script>
 

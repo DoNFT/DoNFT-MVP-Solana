@@ -150,6 +150,14 @@ const getNav = computed({
         },
       },
       {
+          text: "Breeding",
+          name: "AddEffectConfirm",
+          params: {
+              id: token_id.value && token_id.value.length > 1 ? token_id.value[0] : null,
+              effectId: token_id.value && token_id.value.length > 1 ? token_id.value[1] : null,
+          },
+      },
+      {
         text: "Effect",
         name: "AddEffect",
         params: {
