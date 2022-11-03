@@ -27,6 +27,10 @@
           </div>
         </div>
         <div class="form-ntf__inputs">
+          <span class="form-nft-send__inputs-title">Collection</span>
+          <select class="input form-nft__input" v-model="nftObj.symbol">
+            <option v-for="option of collectionForMintOptions" :key="option" :value="option" v-text="option"></option>
+          </select>
           <span class="form-nft-send__inputs-title">Title</span>
           <input
             type="text"
@@ -34,13 +38,13 @@
             class="input form-nft__input"
             v-model="nftObj.name"
           >
-          <span class="form-nft-send__inputs-title">NFT symbol</span>
+          <!--<span class="form-nft-send__inputs-title">NFT symbol</span>
           <textarea
             type="text"
             placeholder="NFT symbol"
             class="input form-nft__input form-nft__textarea"
             v-model="nftObj.symbol"
-          />
+          />-->
           <button
             class="main-btn"
             @click.prevent="createNewNFT"
@@ -93,6 +97,9 @@ import { AppError } from "@/utilities";
 const store = useStore();
 const router = useRouter();
 const { StatusType } = statusMixin();
+
+// const collectionForMint = ref("nft");
+const collectionForMintOptions = reactive(["nft", "effect"]);
 
 const nftObj = reactive({
   name: "NFT token 2 title",
