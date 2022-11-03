@@ -58,7 +58,6 @@ const generateRandomNFT = (val) => {
 };
 
 const handleRedirect = (item) => {
-  console.warn(item.name);
   if(item.name === "BundleNFT" && props.selectedTokens.length === 2) {
       const [token, effect] = props.selectedTokens
       router.push({
