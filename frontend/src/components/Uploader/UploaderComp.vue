@@ -53,6 +53,20 @@ const props = defineProps({
 
 const emitList = defineEmits(["selected"]);
 
+fetch(process.env.VUE_APP_NFT_SAMPLE)
+  .then(response => response.blob())
+  .then(blob => {
+    const file = new File([blob], "nft_sample", {type: blob.type});
+    onFileSelected({
+      target: {
+        files: [file]
+      }
+    });
+  })
+  .catch(e => {
+    console.warn("Error load nft sample", e);
+  });
+
 const onFileSelected = (event) => {
   dragOver.value = false;
   const img = event.target.files ? event.target.files[0] : null;
